@@ -21,3 +21,11 @@ Ruby on Rails applications. Skills and workflows should assume Rails conventions
 ## Project Status
 
 Early-stage / WIP. The repository currently contains only documentation. Implementation of skills and workflows is ongoing.
+
+## Plugin Conventions
+
+### Skill invocation namespace
+The plugin is registered under the name `chef` (see `.claude-plugin/plugin.json`). When referencing this plugin's skills from within other skills, always use the `chef:` namespace prefix — e.g., `/chef:create-pull-request`. Omitting the prefix or using a different namespace will cause the invocation to fail.
+
+### `bin/` scripts are on PATH
+Claude Code automatically adds the plugin's `bin/` directory to PATH when the plugin is enabled. Scripts placed there (e.g., `bin/pre-commit-checks.sh`) can be invoked by bare name — `pre-commit-checks.sh` — without a path prefix. Do not hardcode `bin/` in skill instructions.
