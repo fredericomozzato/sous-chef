@@ -1,0 +1,15 @@
+{
+	"name": "sous-chef",
+	"owner": {
+		"name": "Frederico Mozzato"
+	},
+	"plugins": [
+		{
+			"name": "chef",
+			"source": {
+				"source": "github",
+				"repo": "fredericomozzato/sous-chef"
+			}
+		}
+	]
+}
