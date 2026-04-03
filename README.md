@@ -18,4 +18,25 @@ The plugin is named Sous Chef, but I simplified the usage name to `chef` (less t
 
 
 # Features
-WIP
+
+## `/chef:create-issue`
+
+Creates a GitHub issue following a structured workflow: gathers requirements, formats the title as `[TYPE] Brief description` (e.g. `[FEAT] Add calculator page`), determines the assignee interactively, writes a Markdown body with a problem description, definition-of-done checklist, and TDD execution instructions, then presents the draft for your approval before creating it.
+
+**Usage:** `/chef:create-issue` — describe the issue when prompted, or include a description inline.
+
+---
+
+## `/chef:solve-issue <issue-number>`
+
+Fetches a GitHub issue and implements a full solution end-to-end: creates a properly-named branch off `main`, implements the feature or fix with 100% RSpec test coverage using TDD (red → green → refactor), runs pre-commit checks after each cycle, requests your review before opening a PR, then delegates to `/chef:create-pull-request` to finalize.
+
+**Usage:** `/chef:solve-issue 42` or `/chef:solve-issue 42 use Turbo Streams` to pass additional instructions.
+
+---
+
+## `/chef:create-pull-request`
+
+Creates a pull request (or updates an existing PR description) with a full quality gate: runs `bundler-audit` (hard block on vulnerabilities), captures screenshots for UI changes, writes a description following the project template, waits for your explicit approval, then creates the PR via the GitHub MCP (fallback: `gh` CLI).
+
+**Usage:** `/chef:create-pull-request` — invoke after your branch is ready to ship.
