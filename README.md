@@ -13,6 +13,25 @@ This is the main tech stack that I use. Yes, coding agents can help us write cod
 
 As Rails users we are kind of accostumed with the *omakase* approach... so I created this plugin to be just like that: a set of conventions that I use in my projects. Sous Chef will help quickly prototyping and testing Rails applications with a predictable infracstructure.
 
+## Installation
+
+Run these two commands inside Claude Code:
+
+```
+/plugin marketplace add fredericomozzato/sous-chef
+/plugin install chef@sous-chef
+```
+
+Then bootstrap the plugin configuration:
+
+```
+/chef:setup
+```
+
+This adds the required hooks to `~/.claude/settings.json`. Restart Claude Code or open `/hooks` once to activate.
+
+---
+
 # Usage
 The plugin is named Sous Chef, but I simplified the usage name to `chef` (less typing is always good).
 
@@ -40,6 +59,22 @@ Fetches a GitHub issue and implements a full solution end-to-end: creates a prop
 Creates a pull request (or updates an existing PR description) with a full quality gate: runs `bundler-audit` (hard block on vulnerabilities), captures screenshots for UI changes, writes a description following the project template, waits for your explicit approval, then creates the PR via the GitHub MCP (fallback: `gh` CLI).
 
 **Usage:** `/chef:create-pull-request` — invoke after your branch is ready to ship.
+
+---
+
+## `/chef:setup`
+
+Bootstraps the plugin after installation. Merges the required `SessionStart` hook into `~/.claude/settings.json` so handoff context loads automatically on every new session. Safe to run multiple times — existing config is preserved.
+
+**Usage:** `/chef:setup` — run once after installing the plugin, then restart Claude Code or open `/hooks` to activate.
+
+---
+
+## `/chef:handoff`
+
+Saves a snapshot of the current session before stepping away. Dispatches a Haiku sub-agent to summarize git history, changed files, work done, work remaining, and key decisions into a handoff file at `~/.claude/progress/{project}/{branch}/session-NNN.md` (100-line cap). Running it multiple times in the same session updates the same file; a new session creates the next numbered file. On the next session start, the file is injected automatically — no manual action needed.
+
+**Usage:** `/chef:handoff` — invoke before ending a session on any active branch.
 
 ---
 
