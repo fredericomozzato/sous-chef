@@ -1,5 +1,5 @@
 ---
-name: handoff
+name: chef:handoff
 description: Save a session handoff snapshot before ending a session. Creates or updates a progress file scoped to the current project, branch, and session. Auto-loads on next session start via the SessionStart hook.
 ---
 

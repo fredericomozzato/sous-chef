@@ -1,5 +1,5 @@
 ---
-name: create-pull-request
+name: chef:create-pull-request
 description: Use this skill whenever you need to create a pull request OR update an existing PR description. Covers the full workflow from preparing the description to notifying the user after creation. Also applies when asked to update, rewrite, or add content to a PR description.
 ---
 

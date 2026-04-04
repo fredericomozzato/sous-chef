@@ -1,5 +1,5 @@
 ---
-name: critic
+name: chef:critic
 description: Use before creating a pull request to run the RubyCritic code quality check. Covers running the check, interpreting results, handling score changes, and producing the score table for the PR description.
 ---
 

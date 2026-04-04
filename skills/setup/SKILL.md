@@ -1,5 +1,5 @@
 ---
-name: setup
+name: chef:setup
 description: Bootstrap the chef plugin. Merges required hooks into ~/.claude/settings.json so plugin features work automatically. Run once after installing the plugin.
 ---
 

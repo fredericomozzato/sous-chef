@@ -1,5 +1,5 @@
 ---
-name: solve-issue
+name: chef:solve-issue
 description: Fetches a GitHub issue by number and implements a solution. Covers the full workflow from branching, implementation, testing, pre-commit checks, to PR creation.
 argument-hint: <issue-number>
 disable-model-invocation: true

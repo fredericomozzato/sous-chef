@@ -1,5 +1,5 @@
 ---
-name: create-issue
+name: chef:create-issue
 description: Use when prompted to create a new GitHub issue in the repository.
 disable-model-invocation: true
 ---
