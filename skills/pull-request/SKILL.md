@@ -48,30 +48,7 @@ docker compose exec web bundle exec bundler-audit check --update
 
 #### 0b. RubyCritic Score Check
 
-```bash
-make rubycritic
-```
-
-This compares the current code quality score against the stored minimum in `.rubycritic_minimum_score`.
-
-Capture both the current score and the minimum score from the output — you will need them for the PR description. The output always shows:
-```
-Current score : 92.38
-Minimum score : 93.11
-```
-
-**If the score decreased:**
-- Do NOT proceed with the PR silently
-- Report to the user with the exact score difference (e.g., "Score dropped from 93.11 to 91.40, a decrease of 1.71 points")
-- Explain which files likely contributed (visible in RubyCritic output)
-- Ask the user how to proceed: fix the quality issues now, or merge anyway with justification
-- This is a soft-block — the user can choose to proceed, but they must do so consciously
-- When writing the PR description, include the "Score Trade-off" section explaining the drop
-
-**If the score stayed the same or improved:**
-- Continue to Step 1 without interruption
-- If improved, the script automatically updates `.rubycritic_minimum_score` — commit this file along with the branch changes before creating the PR
-- When writing the PR description, delete the "Score Trade-off" section from the template
+Follow the `/chef:critic` skill. It covers running the check, interpreting results, handling score changes, committing `.rubycritic_minimum_score` if improved, and producing the score table for the PR description.
 
 ### Step 1: Prepare the Draft Folder
 
@@ -213,8 +190,7 @@ Next steps:
 
 Before closing this skill, verify:
 - [ ] Bundler audit run (`bundler-audit check --update` in web container) — no vulnerabilities found (hard block if any)
-- [ ] RubyCritic score checked (`make rubycritic`) — both current score and minimum score captured
-- [ ] `.rubycritic_minimum_score` committed if the score improved (script updates it automatically)
+- [ ] `/chef:critic` skill completed — score table produced, `.rubycritic_minimum_score` committed if improved
 - [ ] PR description includes the score table with PASS or FAIL status
 - [ ] "Score Trade-off" section included if score is FAIL, deleted if PASS
 - [ ] Draft folder created at `tmp/pr/draft_{brief_title}/`
