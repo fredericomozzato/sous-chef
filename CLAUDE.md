@@ -29,3 +29,14 @@ The plugin is registered under the name `chef` (see `.claude-plugin/plugin.json`
 
 ### `bin/` scripts are on PATH
 Claude Code automatically adds the plugin's `bin/` directory to PATH when the plugin is enabled. Scripts placed there (e.g., `bin/pre-commit-checks.sh`) can be invoked by bare name — `pre-commit-checks.sh` — without a path prefix. Do not hardcode `bin/` in skill instructions.
+
+## Versioning
+
+This plugin uses semantic versioning (`MAJOR.MINOR.PATCH`):
+- **PATCH** — bug fixes, typos, non-functional changes
+- **MINOR** — new skills or features, backwards-compatible
+- **MAJOR** — breaking changes to existing skill interfaces
+
+Before merging to `main`, ensure:
+1. `plugin.json` `version` field reflects the correct next version
+2. A git tag matching that version (`vX.Y.Z`) is pushed after the merge
