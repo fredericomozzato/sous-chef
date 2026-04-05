@@ -32,10 +32,16 @@ jq -e '.hooks.SessionStart[]?.hooks[]? | select(.type == "command" and (.command
 
 ## Step 3 — Merge the Hook
 
+Resolve the full path to the script first, then write it into the hook. The bare script name is not on PATH when Claude Code's hook runner executes, so an absolute path is required.
+
+```bash
+HOOK_PATH="$HOME/.claude/plugins/marketplaces/sous-chef/bin/progress-load.sh"
+```
+
 Add the `SessionStart` hook, preserving all existing settings. Use `jq` to merge:
 
 ```bash
-jq '.hooks.SessionStart += [{"hooks": [{"type": "command", "command": "progress-load.sh", "timeout": 10}]}]' ~/.claude/settings.json
+jq --arg cmd "$HOOK_PATH" '.hooks.SessionStart += [{"hooks": [{"type": "command", "command": $cmd, "timeout": 10}]}]' ~/.claude/settings.json
 ```
 
 If `.hooks` or `.hooks.SessionStart` does not exist yet, `+=` initialises them correctly.

@@ -1,7 +1,7 @@
 {
 	"name": "chef",
 	"description": "A Claude Code plugin to streamline development focused on Ruby on Rails applications",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"author": {
 		"name": "Frederico Mozzato",
 		"url": "https://github.com/fredericomozzato"
