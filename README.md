@@ -32,6 +32,65 @@ This adds the required hooks to `~/.claude/settings.json`. Restart Claude Code o
 
 ---
 
+# Architecture
+
+Sous Chef is organized into three layers. Each layer has a distinct responsibility and a defined interface to the next.
+
+## Planning Layer
+
+The planning layer handles everything before a line of code is written. Its job is to produce a shared, approved understanding of what needs to be built and in what order.
+
+### Agents
+
+**Interview Agent**
+Conducts a back-and-forth conversation with the user to clarify intent. Uses `AskUserQuestion` to gather information until it reaches ~99% confidence about what needs to be built. During the interview, the agent assesses scope and will suggest splitting large requests into milestones or a full roadmap if appropriate. The conversation ends when both parties agree on what is in and out of scope.
+
+Once scope is agreed, the agent drafts a `prd.md` following the project PRD template. The PRD includes a scope/horizon indicator (`task | milestone | roadmap`) so the decomposition agent knows what level of detail to apply. The user must approve the PRD before the process continues.
+
+**Decomposition Agent**
+Reads the approved `prd.md` and breaks the work into discrete, ordered tasks. Each task includes a dependency reference where applicable — e.g. `task-003 (blocked by task-001)` — so that parallelizable work is explicitly identified. The agent adapts its output to the scope: a single task produces a flat checklist; a milestone produces a sequenced task list; a roadmap produces grouped milestones with tasks under each.
+
+The agent proposes the breakdown as a `roadmap.md` and presents it to the user for feedback. The loop continues until the user approves.
+
+### Storage
+
+Plans are stored inside the repository under `./sous-chef/plans/`. Each plan gets its own folder named with an auto-incremented ID and a brief slug:
+
+```
+./sous-chef/plans/
+  0001_user-authentication/
+    prd.md
+    roadmap.md
+  0002_billing-integration/
+    prd.md
+    roadmap.md
+```
+
+Plan folders are scoped to the current git branch. When a planning command is invoked, the agent checks `./sous-chef/plans/` for an existing plan on the current branch and offers to resume it.
+
+### Commands
+
+| Command | Purpose |
+|---|---|
+| `/chef:plan` | High-level entry point. Runs the interview agent, produces `prd.md` and `roadmap.md`, and optionally creates GitHub issues. |
+| `/chef:plan-task <issue-number>` | Low-level entry point. Fetches a GitHub issue and re-enters the planning layer to flesh out detail for that specific task. Produces a task-scoped `prd.md` and `roadmap.md`. |
+
+### GitHub Integration
+
+After the roadmap is approved, the agent offers to push the plan to GitHub. Tasks become issues; milestones become GitHub milestones with issues linked to them. The `roadmap.md` is updated with GitHub issue numbers to keep the local plan and remote issues in sync.
+
+Once issues exist on GitHub, the GitHub issue number becomes the canonical reference for the execution layer. All downstream work (`/chef:solve-issue`) operates off issue numbers, not local plan IDs.
+
+### Recursive Planning
+
+The planning layer is designed to be re-entered at different levels of detail. A roadmap-level plan may not have enough information to implement individual tasks directly. In that case, `/chef:plan-task` is invoked with a specific issue number to produce a more detailed plan for that task before the execution layer picks it up.
+
+### Exiting the Planning Layer
+
+The planning layer is exited when both documents are approved and (optionally) issues are created on GitHub. If the user wants to abandon a plan, they can exit the session and delete the plan folder manually. A fresh run of `/chef:plan` on the same branch will start from scratch.
+
+---
+
 # Usage
 The plugin is named Sous Chef, but I simplified the usage name to `chef` (less typing is always good).
 
