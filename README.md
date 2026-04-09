@@ -91,6 +91,90 @@ The planning layer is exited when both documents are approved and (optionally) i
 
 ---
 
+## Execution Layer
+
+The execution layer picks up where planning stops. Its job is to turn an approved plan into merged, production-ready code. It owns the full cycle: branch creation, TDD implementation, quality gates, and PR opening.
+
+### Agents
+
+**Execution Agent**
+Reads the GitHub issue and the corresponding plan documents from `./sous-chef/plans/` (if a task-scoped plan exists), then produces its own low-level implementation plan before touching any code. This plan is written to `./sous-chef/plans/<plan-id>/impl.md` so it survives context resets and handoffs.
+
+With the implementation plan in hand, the agent enters a TDD loop:
+
+1. Write a failing spec (red)
+2. Write the minimum code to pass (green)
+3. Refactor — clean up without breaking the spec
+4. Commit the logical unit of work with a semantic commit message
+5. Repeat until all tasks in the implementation plan are done
+
+The agent runs autonomously and stops only when it hits a defined blocker (see below).
+
+**Frontend work** is identified by the execution agent during implementation planning. Whenever a task requires creating or modifying views, templates, or CSS, the agent invokes the `frontend-design` skill before writing any UI code. No tagging or signal from the planning layer is required — the agent infers the need from what it is about to build.
+
+### Blockers
+
+The agent pauses and asks for input only when it encounters one of two conditions:
+
+- **Ambiguous requirements** — the PRD or task leaves something genuinely unclear that would require a design decision to proceed.
+- **Destructive operations** — the task implies dropping tables, deleting records, or other irreversible data changes that require explicit sign-off.
+
+All other obstacles (failing tests, environment issues, tool errors) are investigated and resolved autonomously.
+
+### Branch and Commit Strategy
+
+Each issue gets one branch. The branch name is derived directly from the GitHub issue: the type prefix comes from the issue title type tag (`feat`, `fix`, `docs`, `agents`, `chore`), followed by the issue number and a slugified title — e.g., `feat/42-add-user-authentication`. The agent reads the issue and constructs the branch name without making its own type judgment.
+
+The agent groups related TDD cycles into semantic commits — one commit per logical unit (e.g., `add User model`, `add session controller`, `add login UI`) — rather than one commit per cycle. The PR is squash-merged.
+
+### Quality Gate
+
+After all implementation cycles complete, the agent runs the following checks in order before opening the PR. **The PR is blocked until all checks pass.**
+
+| Check | Tool | Scope |
+|---|---|---|
+| Security audit | `brakeman` | Full app |
+| Code quality | `rubycritic` (`/chef:critic`) | Full app, scored against project minimum |
+| Mutation testing | `mutant` | Files and methods changed in the current branch only |
+
+If any check fails, the agent reports the failures and stops. It does not auto-fix. You decide how to proceed: patch and re-run, or override.
+
+Mutant is scoped to the branch diff to keep it fast. Where mutant supports method-level filtering, the agent further scopes to changed methods within changed files.
+
+### Environment Context
+
+The agent reads environment conventions (how to start Docker, run the test suite, invoke the server, etc.) from the project's `CLAUDE.md`. Projects must document these conventions explicitly — the agent does not infer or guess commands.
+
+### Storage
+
+The execution layer extends the planning layer's plan folder with an additional file:
+
+```
+./sous-chef/plans/
+  0001_user-authentication/
+    prd.md
+    roadmap.md
+    impl.md        ← written by the execution agent before coding starts
+```
+
+`impl.md` contains the low-level breakdown: files to create or modify, method signatures, migration details, and the ordered list of TDD cycles. It is updated as work progresses.
+
+### Commands
+
+| Command | Purpose |
+|---|---|
+| `/chef:solve-issue <issue-number>` | Main entry point. Fetches the issue, reads the plan, writes `impl.md`, runs the TDD loop, passes the quality gate, and opens the PR. |
+
+### CI and Post-PR
+
+The execution layer exits when the PR is open and all local quality checks pass. CI monitoring and post-merge work are out of scope — those are owned by the quality/harness layer or handled manually.
+
+### Exiting the Execution Layer
+
+The execution layer exits when the PR is open and all quality gates pass. If the agent is interrupted mid-cycle, the `impl.md` checkpoint and the branch commit history allow the next session to resume from where it left off (via `/chef:handoff`).
+
+---
+
 # Usage
 The plugin is named Sous Chef, but I simplified the usage name to `chef` (less typing is always good).
 
