@@ -83,3 +83,127 @@ Saves a snapshot of the current session before stepping away. Dispatches a Haiku
 Runs RubyCritic against the `app/` directory and compares the score against the project minimum stored in `.rubycritic_minimum_score`. PASS continues silently; IMPROVED auto-updates the minimum file (you commit it); FAIL soft-blocks and asks how to proceed. Produces the score table and optional Score Trade-off section for the PR description.
 
 **Usage:** `/chef:critic` — called automatically as part of `/chef:create-pull-request`, or run standalone before opening a PR.
+
+---
+
+# New Flow
+
+A structured workflow for planned feature development — from blank project to shipped PR.
+
+## Overview
+
+```
+mise-en-place → interview → refine → build → qa → fix → deliver
+```
+
+## Slices, not layers
+
+Most AI-assisted projects end up built horizontally: all migrations first, then all models, then all controllers, then all views. You spend hours on infrastructure with nothing to show for it — and by the time something is visible, the earlier layers are already drifting from the actual requirements.
+
+Sous Chef builds **vertically**. Each unit of work is a **slice** — a thin, end-to-end piece of a feature that touches every layer of the application: database migration, model, business logic, controller, view, and tests. Each slice ships as working software. You see results immediately, and every iteration is a complete, testable feature increment.
+
+Think of it as a tracer bullet: a narrow path cut all the way through the stack to prove the architecture works and deliver visible value, before widening it with the next slice.
+
+**Example — a "user posts an article" feature broken into slices:**
+
+| # | Slice | Layers touched |
+|---|---|---|
+| 001 | Create article (title + body, no auth) | migration → model → controller → form → test |
+| 002 | Add authorship (article belongs to user) | migration → model → policy → controller → view → test |
+| 003 | Publish / draft toggle | model state machine → controller action → Turbo Stream → test |
+| 004 | Article index with pagination | query → controller → view component → test |
+
+Each slice is independently deployable and reviewable. No slice leaves the stack half-assembled.
+
+**Slice lifecycle:**
+```
+PENDING → IN_PROGRESS → IN_REVIEW → DONE
+(refine)   (build)        (qa)     (qa clean)
+```
+
+## Project Structure
+
+Created by `/chef:mise-en-place` inside the Rails app:
+
+```
+sous-chef/
+  PRD.md              ← feature specs (written by /chef:interview)
+  ARCHITECTURE.md     ← stack decisions and non-obvious conventions
+  roadmap.md          ← slices + statuses
+  issues/
+    001-slug.md       ← per-slice plan (pending → in_progress → in_review → done)
+  reviews/
+    001-slug/
+      revision-1.md   ← QA findings (in_progress → done)
+```
+
+## Skills
+
+### `/chef:mise-en-place` ✅
+
+Bootstraps the plugin and initializes the project. Does two things in one command:
+1. Merges the `SessionStart` hook into `~/.claude/settings.json` (auto-loads session context)
+2. Runs `mise-en-place.sh` to create the `sous-chef/` structure with template files
+
+Safe to run multiple times — existing config and files are never overwritten.
+
+---
+
+### `/chef:interview` 🔲
+
+Gathers feature requirements through a one-pass Q&A — all questions at once, all files written once. Outputs:
+- `sous-chef/PRD.md` — feature specs, users, UI/UX, data model
+- `sous-chef/ARCHITECTURE.md` — stack decisions and non-obvious conventions
+- `sous-chef/roadmap.md` — one slice per feature, all `STATUS: PENDING`
+- `sous-chef/issues/NNN-slug.md` — stub issue file per slice
+
+---
+
+### `/chef:refine` 🔲
+
+Plans the next `PENDING` slice. Surveys the relevant codebase, drafts a detailed implementation plan (files to touch, schema changes, test cases by name), presents for approval, then writes the plan to the issue file and advances to `IN_PROGRESS`.
+
+---
+
+### `/chef:build` 🔲
+
+Implements the `IN_PROGRESS` slice. Validates the plan against current code, switches to the feature branch, and follows a strict red → green → commit TDD cycle. Advances to `IN_REVIEW` on completion.
+
+---
+
+### `/chef:qa` 🔲
+
+Reviews the `IN_REVIEW` slice in two phases:
+1. Smoke test + completeness audit — all scope items implemented and tested
+2. Implementation review — bugs, architecture deviations, anti-patterns
+
+If findings exist, writes `sous-chef/reviews/NNN-slug/revision-N.md`. If clean, marks the slice `DONE`.
+
+---
+
+### `/chef:fix` 🔲
+
+Resolves all `OPEN` findings in the active revision file, highest severity first. Each fix is verified with `pre-commit-checks.sh`, committed, and marked `FIXED`. When all findings are resolved, hands back to `/chef:qa`.
+
+---
+
+### `/chef:deliver` 🔲
+
+Final delivery gate:
+1. Verifies the current slice is `DONE` in the roadmap
+2. Runs `pre-commit-checks.sh` as a final gate
+3. Delegates to `/chef:create-pull-request` to open the PR
+
+---
+
+## Progress
+
+| Skill | Status |
+|---|---|
+| `chef:mise-en-place` | ✅ Done |
+| `chef:interview` | 🔲 Planned |
+| `chef:refine` | 🔲 Planned |
+| `chef:build` | 🔲 Planned |
+| `chef:qa` | 🔲 Planned |
+| `chef:fix` | 🔲 Planned |
+| `chef:deliver` | 🔲 Planned |
