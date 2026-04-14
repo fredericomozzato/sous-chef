@@ -135,11 +135,10 @@ After all implementation cycles complete, the agent runs the following checks in
 |---|---|---|
 | Security audit | `brakeman` | Full app |
 | Code quality | `rubycritic` (`/chef:critic`) | Full app, scored against project minimum |
-| Mutation testing | `mutant` | Files and methods changed in the current branch only |
 
 If any check fails, the agent reports the failures and stops. It does not auto-fix. You decide how to proceed: patch and re-run, or override.
 
-Mutant is scoped to the branch diff to keep it fast. Where mutant supports method-level filtering, the agent further scopes to changed methods within changed files.
+Mutation testing is intentionally excluded from this gate — it is owned by the QA layer and runs after the PR is opened.
 
 ### Environment Context
 
@@ -172,6 +171,72 @@ The execution layer exits when the PR is open and all local quality checks pass.
 ### Exiting the Execution Layer
 
 The execution layer exits when the PR is open and all quality gates pass. If the agent is interrupted mid-cycle, the `impl.md` checkpoint and the branch commit history allow the next session to resume from where it left off (via `/chef:handoff`).
+
+---
+
+## Quality Assurance Layer
+
+The QA layer runs after the PR is opened. It starts with a clean context, reads the plan to understand intent, and exercises the feature from the outside — as a user would. Its job is to find what the execution layer could not see from the inside: gaps between what was planned and what was built, interaction bugs, security issues, and untested mutations.
+
+### Agents
+
+**QA Agent**
+Starts from a clean context with no knowledge of how the feature was implemented. It reads only `prd.md` to understand what was intended, deliberately avoiding `impl.md` to prevent confirmation bias — if the implementation made a wrong assumption, reading it would obscure that fact.
+
+The agent works through four areas in sequence:
+
+**1. Manual testing**
+Using the Playwright MCP, the agent exercises UI features in the browser and sends HTTP requests to test API endpoints. Test scenarios are derived entirely from the PRD — the agent tests what was asked for, not what was written. Before testing, the agent checks `CLAUDE.md` for environment startup instructions and brings up Docker/the Rails server if the app is not already running.
+
+**2. Code review**
+The agent reads the PR diff and reviews the implementation against the PRD. It looks for logic bugs, incorrect assumptions, missing edge case handling, and gaps between intent and execution.
+
+**3. Security review**
+The agent invokes the `security-review` skill to perform a manual-style security review of the changed code — auth gaps, mass assignment, insecure direct object references, and other vulnerabilities that automated scanners miss.
+
+**4. Mutation testing**
+The agent runs `mutant` scoped to the files and methods changed in the PR branch. Where mutant supports method-level filtering, the agent applies it to further narrow the scope. This is the only place mutant runs — it is not part of the execution quality gate.
+
+### Findings and Report
+
+After completing all four areas, the QA agent writes a report to the plan folder:
+
+```
+./sous-chef/plans/
+  0001_user-authentication/
+    prd.md
+    roadmap.md
+    impl.md
+    qa_report_v1.md     ← first QA pass
+    qa_report_v2.md     ← after execution fixes v1 findings
+```
+
+Each finding in the report includes:
+- **Description** of the issue
+- **Severity**: `critical`, `high`, `medium`, or `low`
+- **Status**: `open`, `done`, or `discarded`
+
+**Critical findings block the PR from merging.** All other severities are advisory — they inform but do not block.
+
+Only you can mark a finding as `discarded`. The QA agent and execution agent cannot dismiss findings; they can only mark them `done` after a fix has been applied.
+
+### The Execution→QA Loop
+
+After the QA report is written, the execution agent reads it as a self-contained work queue. Open findings are treated like implementation tasks: the agent works through each one using its normal TDD loop, marks findings `done` as it resolves them, and commits the fixes.
+
+Once execution finishes a pass, QA runs again. If execution made at least one fix, the new QA run produces the next versioned report (`qa_report_v2.md`, etc.). If no fixes were made, no new version is created.
+
+You decide when to stop cycling. There is no automatic exit condition — the loop continues for as many passes as you invoke.
+
+### Commands
+
+| Command | Purpose |
+|---|---|
+| `/chef:review-pr <pr-number>` | Main entry point. Fetches the PR, reads `prd.md`, runs all four QA areas, and writes the versioned report. |
+
+### Exiting the QA Layer
+
+The QA layer exits after each report is written. Whether to continue the loop (invoke execution again, then QA again) is your decision. The loop is considered complete when you are satisfied with the state of the report — all findings are either `done` or `discarded`.
 
 ---
 
