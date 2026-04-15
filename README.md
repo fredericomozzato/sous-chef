@@ -149,13 +149,25 @@ Safe to run multiple times — existing config and files are never overwritten.
 
 ---
 
-### `/chef:interview` 🔲
+### `/chef:interview` ✅
 
-Gathers feature requirements through a one-pass Q&A — all questions at once, all files written once. Outputs:
-- `sous-chef/PRD.md` — feature specs, users, UI/UX, data model
-- `sous-chef/ARCHITECTURE.md` — stack decisions and non-obvious conventions
-- `sous-chef/roadmap.md` — one slice per feature, all `STATUS: PENDING`
-- `sous-chef/issues/NNN-slug.md` — stub issue file per slice
+Gathers feature requirements through interactive Q&A using `AskUserQuestion` throughout. Covers product requirements, stack decisions, the standardized validation layer, and visual design (skipped for API-only projects). Asks questions until requirements are clear (~95% confidence), presents concrete alternatives with a recommended default for undecided choices, then writes:
+- `sous-chef/PRD.md` — users, features (each with `STATUS: PLANNED`), UI/UX flows, design brief (palette, typography, layout, component library), and data model
+- `sous-chef/ARCHITECTURE.md` — full stack table, conventions, and decision rationale
+
+**Validation layer** — disclosed to the user at interview time and documented in both artifacts. The chef default is:
+
+| Tool | Purpose |
+|------|---------|
+| RSpec + SimpleCov + Mutant | Testing and coverage |
+| RuboCop + rubocop-rails + rubocop-rspec | Style and lint |
+| RubyCritic | Code quality score tracking |
+| Brakeman | Security vulnerability scanning |
+| bundler-audit | CVE scanning on `Gemfile.lock` |
+| database_consistency | DB constraint / model validation alignment |
+| strong_migrations | Unsafe migration detection at boot |
+
+The user can remove tools or replace the stack — deviations are documented in `ARCHITECTURE.md` and flagged in the completion message.
 
 ---
 
@@ -201,7 +213,7 @@ Final delivery gate:
 | Skill | Status |
 |---|---|
 | `chef:mise-en-place` | ✅ Done |
-| `chef:interview` | 🔲 Planned |
+| `chef:interview` | ✅ Done |
 | `chef:refine` | 🔲 Planned |
 | `chef:build` | 🔲 Planned |
 | `chef:qa` | 🔲 Planned |
