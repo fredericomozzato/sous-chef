@@ -152,10 +152,7 @@ sous-chef/
 
 Each milestone document contains the scope, constraints, and an ordered list of slices. Slices are high-level and intentional — no implementation details. `chef:refine` expands each slice into a full implementation plan written to `issues/`.
 
-```
-PENDING → IN_PROGRESS → IN_REVIEW → DONE
-(refine)   (build)        (qa)     (qa clean)
-```
+**File layout reference:** `skills/shared/STRUCTURE.md` is the single source of truth for all path conventions, ID/slug rules, file templates, and the slice status lifecycle. All skills read it before touching the filesystem.
 
 ## Skills
 
@@ -193,15 +190,29 @@ The user can remove tools or replace the stack — deviations are documented in 
 
 ### `/chef:milestone` ✅
 
-Plans the next milestone. Reads `PRD.md` and `ARCHITECTURE.md` for context, interviews the user to establish scope, proposes a vertical slice breakdown, and writes the milestone document to `sous-chef/milestones/NNN-slug.md`. Optionally activates the milestone immediately by updating `CHECKPOINT`.
+Plans the next milestone. A milestone is a scoped unit of work — it can be the full MVP, a single feature, or any bounded piece of the product. There is no fixed relationship to PRD features; scope is defined at runtime.
 
-Blocks if a milestone is already IN_PROGRESS. Each milestone can contain any number of slices — the milestone is DONE when all slices are DONE.
+**What it does:**
+1. Guards: requires `PRD.md` + `ARCHITECTURE.md`; blocks if a milestone is already IN_PROGRESS
+2. Reads PRD and ARCHITECTURE silently for context
+3. Asks the user what this milestone covers; follows up only if the scope is too vague to propose slices
+4. Proposes a vertical slice breakdown (tracer-bullet), iterates until approved
+5. Writes `sous-chef/milestones/NNN-slug.md` with the approved slices (all STATUS: PENDING)
+6. Optionally activates: writes `CHECKPOINT` first, then sets milestone STATUS → IN_PROGRESS
+
+**Key design decisions:**
+- Milestones replace the old single `roadmap.md` — each is its own file, enabling independent scope and status tracking
+- Slices inside the milestone are **intention only** — no method names, no file paths, no gem config. `chef:refine` handles the how
+- `CHECKPOINT` is a one-line file (`MILESTONE: NNN-slug`) that tells every downstream skill where active work is, without scanning all milestone files
+- At most one milestone is IN_PROGRESS at a time. The milestone is DONE when all its slices are DONE
 
 ---
 
 ### `/chef:refine` 🔲
 
-Plans the next `PENDING` slice. Surveys the relevant codebase, drafts a detailed implementation plan (files to touch, schema changes, test cases by name), presents for approval, then writes the plan to the issue file and advances to `IN_PROGRESS`.
+Expands the next `PENDING` slice into a full implementation plan. Reads `CHECKPOINT` to find the active milestone, locates the first PENDING slice, surveys the relevant codebase, drafts a detailed plan (files to touch, schema changes, test cases by name), presents for approval, then writes it to `sous-chef/issues/NNN-slug/NNN.md` and advances the slice to `IN_PROGRESS`.
+
+If no milestone is active (no CHECKPOINT or current milestone is DONE), offers to activate a PENDING milestone first.
 
 ---
 
@@ -217,7 +228,7 @@ Reviews the `IN_REVIEW` slice in two phases:
 1. Smoke test + completeness audit — all scope items implemented and tested
 2. Implementation review — bugs, architecture deviations, anti-patterns
 
-If findings exist, writes `sous-chef/reviews/NNN-slug/revision-N.md`. If clean, marks the slice `DONE`.
+If findings exist, writes `sous-chef/reviews/NNN-slug/NNN/revision-N.md` and hands off to `chef:fix`. If clean, marks the slice `DONE` and updates `CHECKPOINT` to point to the next PENDING slice (or marks the milestone DONE if all slices are complete).
 
 ---
 
@@ -230,7 +241,7 @@ Resolves all `OPEN` findings in the active revision file, highest severity first
 ### `/chef:deliver` 🔲
 
 Final delivery gate:
-1. Verifies the current slice is `DONE` in the roadmap
+1. Verifies the current milestone is `DONE` (all slices complete)
 2. Runs `pre-commit-checks.sh` as a final gate
 3. Delegates to `/chef:create-pull-request` to open the PR
 
