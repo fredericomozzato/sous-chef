@@ -93,7 +93,7 @@ A structured workflow for planned feature development — from blank project to 
 ## Overview
 
 ```
-mise-en-place → interview → refine → build → qa → fix → deliver
+mise-en-place → interview → milestone → refine → build → qa → fix → deliver
 ```
 
 ## Slices, not layers
@@ -127,14 +127,34 @@ Created by `/chef:mise-en-place` inside the Rails app:
 
 ```
 sous-chef/
-  PRD.md              ← feature specs (written by /chef:interview)
-  ARCHITECTURE.md     ← stack decisions and non-obvious conventions
-  roadmap.md          ← slices + statuses
+  PRD.md                        ← feature specs (written by /chef:interview)
+  ARCHITECTURE.md               ← stack decisions and non-obvious conventions
+  CHECKPOINT                    ← active milestone (one line, updated by each skill)
+  milestones/
+    001-oauth.md                ← milestone with inline slices (written by /chef:milestone)
+    002-articles.md
   issues/
-    001-slug.md       ← per-slice plan (pending → in_progress → in_review → done)
+    001-oauth/
+      001.md                    ← expanded slice plan (written by /chef:refine)
+      002.md
+    002-articles/
+      001.md
   reviews/
-    001-slug/
-      revision-1.md   ← QA findings (in_progress → done)
+    001-oauth/
+      001/
+        revision-1.md           ← QA findings (written by /chef:qa)
+    002-articles/
+      001/
+        revision-1.md
+```
+
+**Milestone file anatomy:**
+
+Each milestone document contains the scope, constraints, and an ordered list of slices. Slices are high-level and intentional — no implementation details. `chef:refine` expands each slice into a full implementation plan written to `issues/`.
+
+```
+PENDING → IN_PROGRESS → IN_REVIEW → DONE
+(refine)   (build)        (qa)     (qa clean)
 ```
 
 ## Skills
@@ -168,6 +188,14 @@ Gathers feature requirements through interactive Q&A using `AskUserQuestion` thr
 | strong_migrations | Unsafe migration detection at boot |
 
 The user can remove tools or replace the stack — deviations are documented in `ARCHITECTURE.md` and flagged in the completion message.
+
+---
+
+### `/chef:milestone` ✅
+
+Plans the next milestone. Reads `PRD.md` and `ARCHITECTURE.md` for context, interviews the user to establish scope, proposes a vertical slice breakdown, and writes the milestone document to `sous-chef/milestones/NNN-slug.md`. Optionally activates the milestone immediately by updating `CHECKPOINT`.
+
+Blocks if a milestone is already IN_PROGRESS. Each milestone can contain any number of slices — the milestone is DONE when all slices are DONE.
 
 ---
 
@@ -214,6 +242,7 @@ Final delivery gate:
 |---|---|
 | `chef:mise-en-place` | ✅ Done |
 | `chef:interview` | ✅ Done |
+| `chef:milestone` | ✅ Done |
 | `chef:refine` | 🔲 Planned |
 | `chef:build` | 🔲 Planned |
 | `chef:qa` | 🔲 Planned |

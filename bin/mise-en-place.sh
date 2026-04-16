@@ -6,7 +6,7 @@ set -e
 
 BASE="sous-chef"
 
-mkdir -p "$BASE/issues" "$BASE/reviews"
+mkdir -p "$BASE/milestones" "$BASE/issues" "$BASE/reviews"
 
 if [ ! -f "$BASE/PRD.md" ]; then
   cat > "$BASE/PRD.md" << 'EOF'
@@ -58,25 +58,6 @@ EOF
   echo "  created $BASE/ARCHITECTURE.md"
 else
   echo "  skipped $BASE/ARCHITECTURE.md (already exists)"
-fi
-
-if [ ! -f "$BASE/roadmap.md" ]; then
-  cat > "$BASE/roadmap.md" << 'EOF'
-# Roadmap
-
-<!--
-Slice format:
-
-## NNN — Slice Name
-STATUS: PENDING | IN_PROGRESS | IN_REVIEW | DONE
-
-- scope bullet
-- scope bullet
--->
-EOF
-  echo "  created $BASE/roadmap.md"
-else
-  echo "  skipped $BASE/roadmap.md (already exists)"
 fi
 
 echo ""

@@ -71,7 +71,7 @@ Claude Code hook: <added to ~/.claude/settings.json | already configured>
 sous-chef/ structure: <created | already exists>
   sous-chef/PRD.md
   sous-chef/ARCHITECTURE.md
-  sous-chef/roadmap.md
+  sous-chef/milestones/
   sous-chef/issues/
   sous-chef/reviews/
 

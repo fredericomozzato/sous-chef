@@ -96,7 +96,7 @@ Interview complete.
   sous-chef/PRD.md          — {N} features documented, all PLANNED
   sous-chef/ARCHITECTURE.md — stack locked, conventions documented
 
-Next step: run /chef:roadmap to break the PRD into slices.
+Next step: run /chef:milestone to plan your first milestone.
 ```
 
 If the user opted out of the default validation stack, flag that some chef quality-gate skills may not apply.
