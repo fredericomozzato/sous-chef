@@ -129,7 +129,7 @@ Created by `/chef:mise-en-place` inside the Rails app:
 sous-chef/
   PRD.md                        ← feature specs (written by /chef:interview)
   ARCHITECTURE.md               ← stack decisions and non-obvious conventions
-  CHECKPOINT                    ← active milestone (one line, updated by each skill)
+  CHECKPOINT                    ← active milestone + slice + status (updated by each skill)
   milestones/
     001-oauth.md                ← milestone with inline slices (written by /chef:milestone)
     002-articles.md
@@ -203,14 +203,14 @@ Plans the next milestone. A milestone is a scoped unit of work — it can be the
 **Key design decisions:**
 - Milestones replace the old single `roadmap.md` — each is its own file, enabling independent scope and status tracking
 - Slices inside the milestone are **intention only** — no method names, no file paths, no gem config. `chef:refine` handles the how
-- `CHECKPOINT` is a one-line file (`MILESTONE: NNN-slug`) that tells every downstream skill where active work is, without scanning all milestone files
+- `CHECKPOINT` is the single source of truth for active work. On milestone activation it holds just `MILESTONE: NNN-slug`; after the first `chef:refine` run it carries all three lines — `MILESTONE`, `SLICE`, and `STATUS` — so every downstream skill knows exactly what is being worked on without scanning any other file
 - At most one milestone is IN_PROGRESS at a time. The milestone is DONE when all its slices are DONE
 
 ---
 
 ### `/chef:refine` ✅
 
-Expands the next `PENDING` slice into a full implementation plan. Reads `CHECKPOINT` to find the active milestone, locates the first PENDING slice, surveys the relevant codebase, drafts a detailed plan (files to touch, schema changes, test cases by name), presents for approval, then writes it to `sous-chef/issues/NNN-slug/NNN.md` and advances the slice to `IN_PROGRESS`.
+Expands the next `PENDING` slice into a full implementation plan. Reads `CHECKPOINT` to find the active milestone, locates the first PENDING slice, surveys the relevant codebase, drafts a detailed plan (files to touch, schema changes, test cases by name), presents for approval, then writes it to `sous-chef/issues/NNN-slug/NNN.md` and overwrites `CHECKPOINT` with the full three-line format (`MILESTONE`, `SLICE`, `STATUS: IN_PROGRESS`).
 
 If no milestone is active (no CHECKPOINT or current milestone is DONE), offers to activate a PENDING milestone first.
 
