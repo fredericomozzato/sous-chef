@@ -234,11 +234,18 @@ Implements the `IN_PROGRESS` slice. Reads `CHECKPOINT` to locate the active mile
 
 ### `/chef:qa` 🔲
 
-Reviews the `IN_REVIEW` slice in two phases:
-1. Smoke test + completeness audit — all scope items implemented and tested
-2. Implementation review — bugs, architecture deviations, anti-patterns
+Reviews the `IN_REVIEW` slice in three phases:
+1. Build gate + completeness audit — runs `pre-commit-checks.sh` and verifies every scope bullet is implemented and tested
+2. Execution trace — follows the code from entrypoint to exitpoint to understand what the feature actually does before judging it
+3. Implementation review — bugs, architecture deviations, anti-patterns
 
-If findings exist, writes `sous-chef/reviews/NNN-slug/NNN/revision-N.md` and hands off to `chef:fix`. If clean, marks the slice `DONE` and updates `CHECKPOINT` to point to the next PENDING slice (or marks the milestone DONE if all slices are complete).
+If findings exist, writes `sous-chef/reviews/NNN-slug/NNN/revision-N.md` and hands off to `chef:fix`. If clean, marks the slice `DONE`. Findings describe problems only — no fix instructions.
+
+---
+
+### `/chef:browser-testing` 🔲
+
+Optional browser smoke test for slices that touch views. Opens the app in a real browser via Playwright, exercises the slice UI flows, and captures screenshots. Intended to complement RSpec system specs, not replace them. Run it after `/chef:qa` passes when you want visual confirmation before opening a PR.
 
 ---
 
@@ -266,6 +273,7 @@ Final delivery gate:
 | `chef:milestone` | ✅ Done |
 | `chef:refine` | ✅ Done |
 | `chef:build` | 🔲 Planned |
-| `chef:qa` | 🔲 Planned |
+| `chef:qa` | ✅ Done |
 | `chef:fix` | 🔲 Planned |
 | `chef:deliver` | 🔲 Planned |
+| `chef:browser-testing` | 🔲 Planned |
