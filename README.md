@@ -208,7 +208,7 @@ Plans the next milestone. A milestone is a scoped unit of work — it can be the
 
 ---
 
-### `/chef:refine` 🔲
+### `/chef:refine` ✅
 
 Expands the next `PENDING` slice into a full implementation plan. Reads `CHECKPOINT` to find the active milestone, locates the first PENDING slice, surveys the relevant codebase, drafts a detailed plan (files to touch, schema changes, test cases by name), presents for approval, then writes it to `sous-chef/issues/NNN-slug/NNN.md` and advances the slice to `IN_PROGRESS`.
 
@@ -254,7 +254,7 @@ Final delivery gate:
 | `chef:mise-en-place` | ✅ Done |
 | `chef:interview` | ✅ Done |
 | `chef:milestone` | ✅ Done |
-| `chef:refine` | 🔲 Planned |
+| `chef:refine` | ✅ Done |
 | `chef:build` | 🔲 Planned |
 | `chef:qa` | 🔲 Planned |
 | `chef:fix` | 🔲 Planned |
