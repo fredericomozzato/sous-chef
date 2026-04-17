@@ -218,7 +218,17 @@ If no milestone is active (no CHECKPOINT or current milestone is DONE), offers t
 
 ### `/chef:build` 🔲
 
-Implements the `IN_PROGRESS` slice. Validates the plan against current code, switches to the feature branch, and follows a strict red → green → commit TDD cycle. Advances to `IN_REVIEW` on completion.
+Implements the `IN_PROGRESS` slice. Reads `CHECKPOINT` to locate the active milestone and slice, opens the issue plan, and validates it against the current codebase before touching any code.
+
+**What it does:**
+1. Guards: `CHECKPOINT` must have `STATUS: IN_PROGRESS` — stops and suggests `/chef:refine` if not
+2. Reads the issue file at `sous-chef/issues/{milestone-slug}/{slice-NNN}.md` — the plan is the contract; no other high-level documents are loaded
+3. Validates the plan against current code (renamed files, changed signatures, missing dependencies) — blocks on any blocker before starting
+4. Checks out the feature branch from the issue frontmatter (`branch:` field)
+5. Implements with a strict TDD cycle per plan step: write failing spec → `rspec` (scoped to changed files) → implement → `rspec` green → commit
+6. Commits after each numbered plan step: `feat({milestone-slug}/{slice-NNN}): description`
+7. Runs `pre-commit-checks.sh` as the final gate — all checks must be green before advancing
+8. Updates `CHECKPOINT` (`STATUS: IN_REVIEW`), the milestone slice, and the issue frontmatter
 
 ---
 
