@@ -16,13 +16,20 @@ Identify the next PENDING slice in the active milestone, survey the codebase, dr
 Read `sous-chef/CHECKPOINT`.
 
 **No CHECKPOINT (or file missing):**
-- List `sous-chef/milestones/` for any `status: PENDING` milestone
+- List `sous-chef/milestones/` for any file whose frontmatter contains `status: PENDING`
 - If found, ask: *"No milestone is active. Want me to activate {NNN-slug} so we can start refining slices?"*
-  - If yes: write CHECKPOINT (`MILESTONE: {NNN-slug}`), set milestone `status: PENDING → IN_PROGRESS`, continue to Step 2
+  - If yes: write CHECKPOINT (`MILESTONE: {NNN-slug}` — no SLICE or STATUS yet), set milestone `status: PENDING → IN_PROGRESS`, continue to Step 2
   - If no: stop
 - If none found: stop — `No active or pending milestones. Run /chef:milestone first.`
 
-**CHECKPOINT exists — open `sous-chef/milestones/{NNN-slug}.md`:**
+**CHECKPOINT exists — parse it:**
+
+CHECKPOINT may have one line (milestone only) or three lines (milestone + slice + status). Extract:
+- `MILESTONE:` → the active milestone slug (always present)
+- `SLICE:` → the active slice number (absent if no slice has been refined yet)
+- `STATUS:` → current slice status (absent if no slice has been refined yet)
+
+Open `sous-chef/milestones/{milestone-slug}.md`:
 - If milestone `status: DONE`: stop — `Milestone {NNN-slug} is complete. Run /chef:milestone to start the next one.`
 - If no PENDING slices remain (all are IN_PROGRESS, IN_REVIEW, or DONE): stop and report each slice's current status. Suggest `/chef:build` or `/chef:qa` as appropriate.
 
@@ -82,7 +89,7 @@ On approval, in this order:
 2. Write the plan to `sous-chef/issues/{NNN-slug}/{slice-NNN}.md` with this frontmatter:
    ```yaml
    ---
-   status: in_progress
+   status: IN_PROGRESS
    branch: feat/{milestone-slug}/{slice-NNN}-{slice-slug}
    slice: "{slice-NNN}"
    milestone: "{NNN-slug}"
@@ -91,6 +98,13 @@ On approval, in this order:
 
 3. In `sous-chef/milestones/{NNN-slug}.md`, update the slice:
    `STATUS: PENDING` → `STATUS: IN_PROGRESS`
+
+4. Overwrite `sous-chef/CHECKPOINT` with the full three-line format:
+   ```
+   MILESTONE: {NNN-slug}
+   SLICE: {slice-NNN}
+   STATUS: IN_PROGRESS
+   ```
 
 Do NOT commit. Do NOT switch branches. This step is planning only.
 

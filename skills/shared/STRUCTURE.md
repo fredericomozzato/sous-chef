@@ -43,18 +43,26 @@ Examples: "OAuth Authentication" → `oauth-authentication`, "2FA Setup" → `2f
 
 ## CHECKPOINT
 
-A single-line file at `sous-chef/CHECKPOINT`:
+A plain-text file at `sous-chef/CHECKPOINT`. It is the single source of truth for what is being worked on. Skills read it first — no file scanning needed.
 
+**When a milestone is activated but no slice has been refined yet** (written by `chef:milestone`):
 ```
 MILESTONE: 001-oauth-authentication
 ```
 
-The value is `NNN-slug` — **no `.md` extension**. Skills append `.md` when opening the milestone file.
+**When a slice is active** (written/updated by `chef:refine`, `chef:build`, `chef:qa`):
+```
+MILESTONE: 001-oauth-authentication
+SLICE: 002
+STATUS: IN_PROGRESS
+```
 
-- Written when a milestone is activated (STATUS → IN_PROGRESS)
-- Updated when a new milestone is activated
-- Skills read this first to locate the active milestone file
-- If CHECKPOINT is absent or the referenced milestone is DONE, there is no active milestone
+Rules:
+- `MILESTONE` value is `NNN-slug` — **no `.md` extension**. Skills append `.md` when opening the milestone file.
+- `SLICE` value is the zero-padded three-digit slice number (e.g. `002`). Absent when no slice has been activated yet.
+- `STATUS` is always uppercase: `IN_PROGRESS`, `IN_REVIEW`, or `DONE`. Absent when no slice has been activated yet.
+- Written when a milestone is activated; updated at every slice status transition.
+- If CHECKPOINT is absent, there is no active milestone. If SLICE is absent, no slice has been refined yet.
 
 ---
 
@@ -93,6 +101,18 @@ Scope:
 `sous-chef/issues/NNN-slug/NNN.md`
 
 Written by `chef:refine`. Contains the full implementation plan for a single slice: files to touch, schema changes, test cases by name. This is the only place where implementation details live.
+
+Frontmatter uses uppercase status values:
+```yaml
+---
+status: IN_PROGRESS
+branch: feat/{milestone-slug}/{slice-NNN}-{slice-slug}
+slice: "{slice-NNN}"
+milestone: "{NNN-slug}"
+---
+```
+
+Status transitions: `IN_PROGRESS` → `IN_REVIEW` (by `chef:build`) → `DONE` (by `chef:qa`).
 
 ---
 

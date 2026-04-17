@@ -29,13 +29,12 @@ Cannot create a milestone — sous-chef/PRD.md and sous-chef/ARCHITECTURE.md are
 Run /chef:interview first to document the app requirements and stack.
 ```
 
-Check for an existing IN_PROGRESS milestone: if `sous-chef/milestones/` exists, scan it for any file whose frontmatter contains `status: IN_PROGRESS`. If the folder does not exist yet, skip this check — no milestone can be active.
-
-If an IN_PROGRESS milestone is found, stop:
+Check for an existing active milestone: read `sous-chef/CHECKPOINT`. If the file exists, an active milestone is already in progress — stop:
 ```
-There is already an active milestone: {filename}
+There is already an active milestone: {MILESTONE value from CHECKPOINT}
 Finish the current milestone before starting a new one.
 ```
+If CHECKPOINT does not exist, no milestone is active — proceed.
 
 ## Step 2 — Read context
 
@@ -104,6 +103,7 @@ Ask: *"Ready to start building? I can activate this milestone now."*
    ```
    MILESTONE: {NNN}-{slug}
    ```
+   No SLICE or STATUS line yet — those are written by `chef:refine` when a slice is activated.
 2. Then update the milestone frontmatter: `status: PENDING` → `status: IN_PROGRESS`
 
 Writing CHECKPOINT first ensures the system is never left with an IN_PROGRESS milestone that has no CHECKPOINT entry.
