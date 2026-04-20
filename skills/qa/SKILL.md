@@ -104,7 +104,7 @@ Finding IDs use prefix `I` (e.g. `I1`, `I2`).
 
 ## Step 6 — Write revision file (only if findings exist)
 
-If both phases produced no findings, skip to Step 6.
+If both phases produced no findings, skip to Step 7.
 
 **Determine revision number:** count existing `revision-*.md` files in `sous-chef/reviews/{MILESTONE}/{SLICE}/`. Next revision = count + 1. Create the directory if it does not exist.
 

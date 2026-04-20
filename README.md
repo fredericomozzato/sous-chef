@@ -216,19 +216,13 @@ If no milestone is active (no CHECKPOINT or current milestone is DONE), offers t
 
 ---
 
-### `/chef:build` 🔲
+### `/chef:build` ✅
 
-Implements the `IN_PROGRESS` slice. Reads `CHECKPOINT` to locate the active milestone and slice, opens the issue plan, and validates it against the current codebase before touching any code.
+Implements the `IN_PROGRESS` slice. Guards on `CHECKPOINT` — `STATUS` must be `IN_PROGRESS`, otherwise stops and routes to the correct command. Opens the issue plan at `sous-chef/issues/{milestone-slug}/{slice-NNN}.md` as the sole contract — no PRD, ARCHITECTURE, or milestone file is consulted during implementation. Validates the plan against current code before touching any file: any referenced class, method, or file that does not exist or has drifted is reported as a blocker, and build stops until the plan is corrected.
 
-**What it does:**
-1. Guards: `CHECKPOINT` must have `STATUS: IN_PROGRESS` — stops and suggests `/chef:refine` if not
-2. Reads the issue file at `sous-chef/issues/{milestone-slug}/{slice-NNN}.md` — the plan is the contract; no other high-level documents are loaded
-3. Validates the plan against current code (renamed files, changed signatures, missing dependencies) — blocks on any blocker before starting
-4. Checks out the feature branch from the issue frontmatter (`branch:` field)
-5. Implements with a strict TDD cycle per plan step: write failing spec → `rspec` (scoped to changed files) → implement → `rspec` green → commit
-6. Commits after each numbered plan step: `feat({milestone-slug}/{slice-NNN}): description`
-7. Runs `pre-commit-checks.sh` as the final gate — all checks must be green before advancing
-8. Updates `CHECKPOINT` (`STATUS: IN_REVIEW`), the milestone slice, and the issue frontmatter
+Checks out the feature branch from the issue frontmatter (`branch:` field), then follows each numbered plan step with a strict TDD cycle: write failing RSpec examples → `rspec` (red) → implement → `rspec` (green) → commit. Each step gets its own commit: `feat({milestone-slug}/{slice-NNN}): description`. After all steps pass, runs `pre-commit-checks.sh` as a hard gate — every check must be green, no exceptions.
+
+Updates status in three places — issue frontmatter, milestone slice, and `CHECKPOINT` — from `IN_PROGRESS` to `IN_REVIEW`, commits the three files together, then hands off to `/chef:qa`.
 
 ---
 
@@ -272,7 +266,7 @@ Final delivery gate:
 | `chef:interview` | ✅ Done |
 | `chef:milestone` | ✅ Done |
 | `chef:refine` | ✅ Done |
-| `chef:build` | 🔲 Planned |
+| `chef:build` | ✅ Done |
 | `chef:qa` | ✅ Done |
 | `chef:fix` | ✅ Done |
 | `chef:deliver` | 🔲 Planned |
