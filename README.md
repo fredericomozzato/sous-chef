@@ -249,9 +249,9 @@ Optional browser smoke test for slices that touch views. Opens the app in a real
 
 ---
 
-### `/chef:fix` 🔲
+### `/chef:fix` ✅
 
-Resolves all `OPEN` findings in the active revision file, highest severity first. Each fix is verified with `pre-commit-checks.sh`, committed, and marked `FIXED`. When all findings are resolved, hands back to `/chef:qa`.
+Resolves all `OPEN` findings in the active revision file, highest severity first. For each finding: implements the fix (writing a failing RSpec example first for behavioral bugs), iterates on `pre-commit-checks.sh` until green, marks the finding `FIXED` in the revision file, then commits immediately — one commit per finding for full auditable history. Escalates to the user only if genuinely stuck after exhausting approaches. When all findings are resolved, hands back to `/chef:qa`.
 
 ---
 
@@ -274,6 +274,6 @@ Final delivery gate:
 | `chef:refine` | ✅ Done |
 | `chef:build` | 🔲 Planned |
 | `chef:qa` | ✅ Done |
-| `chef:fix` | 🔲 Planned |
+| `chef:fix` | ✅ Done |
 | `chef:deliver` | 🔲 Planned |
 | `chef:browser-testing` | 🔲 Planned |

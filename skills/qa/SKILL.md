@@ -114,7 +114,7 @@ Write `sous-chef/reviews/{MILESTONE}/{SLICE}/revision-N.md`:
 ---
 branch: {branch from issue frontmatter}
 revision: N
-status: in_progress
+status: IN_PROGRESS
 milestone: "{MILESTONE}"
 slice: "{SLICE}"
 ---
