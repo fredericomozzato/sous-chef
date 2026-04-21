@@ -235,6 +235,8 @@ Reviews the `IN_REVIEW` slice in three phases:
 
 If findings exist, writes `sous-chef/reviews/NNN-slug/NNN/revision-N.md` and hands off to `chef:fix`. If clean, marks the slice `DONE`. Findings describe problems only — no fix instructions.
 
+**Every finding is reported.** The agent never filters or suppresses findings on its own judgment. Only you can decide a finding is not worth addressing — do so by explicitly instructing `/chef:fix` to discard it.
+
 ---
 
 ### `/chef:browser-testing` ✅
@@ -253,6 +255,8 @@ Findings use the `U` prefix (`U1`, `U2`, …) and follow the same flat inline fo
 
 Resolves all `OPEN` findings in the active revision file, highest severity first. For each finding: implements the fix (writing a failing RSpec example first for behavioral bugs), iterates on `pre-commit-checks.sh` until green, marks the finding `FIXED` in the revision file, then commits immediately — one commit per finding for full auditable history. Escalates to the user only if genuinely stuck after exhausting approaches. When all findings are resolved, hands back to `/chef:qa`.
 
+**Discarding findings:** only you can mark a finding as `DISCARDED`. The agent never suggests or initiates a discard. To dismiss a finding, explicitly tell the agent which finding ID to discard and provide a reason — it will update the revision file and commit with your justification.
+
 ---
 
 ### `/chef:deliver` ✅
@@ -269,6 +273,24 @@ Ships the completed slice as a PR. A milestone delivers through multiple `chef:d
 
 ---
 
+### `/chef:status` ✅
+
+Reports milestone progress at a glance. Reads `CHECKPOINT` and the active milestone file, then prints a summary showing all slices with their current statuses, counts DONE slices, and recommends the next command to run based on the active slice's status.
+
+**Read-only.** Never writes or commits anything.
+
+Handles all CHECKPOINT states:
+- No CHECKPOINT → suggests `/chef:milestone`
+- Milestone only (no slice) → suggests `/chef:refine`
+- IN_PROGRESS → suggests `/chef:build`
+- IN_REVIEW → suggests `/chef:qa`
+- DONE → suggests `/chef:deliver`
+- COMPLETE → suggests merge + `/chef:milestone`
+
+**Usage:** `/chef:status` — run anytime to see where you are in the current milestone.
+
+---
+
 ## Progress
 
 | Skill | Status |
@@ -282,3 +304,4 @@ Ships the completed slice as a PR. A milestone delivers through multiple `chef:d
 | `chef:fix` | ✅ Done |
 | `chef:deliver` | ✅ Done |
 | `chef:browser-testing` | ✅ Done |
+| `chef:status` | ✅ Done |
