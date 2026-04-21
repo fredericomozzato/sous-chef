@@ -249,12 +249,17 @@ Resolves all `OPEN` findings in the active revision file, highest severity first
 
 ---
 
-### `/chef:deliver` 🔲
+### `/chef:deliver` ✅
 
-Final delivery gate:
-1. Verifies the current milestone is `DONE` (all slices complete)
-2. Runs `pre-commit-checks.sh` as a final gate
-3. Delegates to `/chef:create-pull-request` to open the PR
+Ships the completed slice as a PR. A milestone delivers through multiple `chef:deliver` runs — one per slice.
+
+**Guards:** requires `CHECKPOINT` with `STATUS: DONE`, no open QA revisions (`status: IN_PROGRESS`) for the active slice, and `pre-commit-checks.sh` passing. On any failure it stops and reports — it never attempts to fix.
+
+**UI slices:** if the slice touches views, prompts for (or decides) which screen sizes to capture, then delegates screenshot capture to a Haiku subagent via Playwright. Screenshots are saved to `tmp/pr/{milestone}/{slice}/` and included in the PR description as `<!-- IMAGE: -->` placeholders. The folder is opened automatically after capture.
+
+**PR:** drafts a title (slice-scoped, bracketed type prefix) and a two-section body — `Summary` (user-visible outcomes) and `Test Plan` (discrete verification steps from the issue file), plus a `Screenshots` section when applicable. Shows the full draft to the user and iterates until explicit approval. Only then pushes the branch and creates the PR via GitHub MCP (fallback: `gh` CLI).
+
+**CHECKPOINT:** after the PR is created, checks whether the milestone has remaining slices. If yes, resets `CHECKPOINT` to the milestone-only line so `/chef:refine` can pick up the next slice. If all slices are done, deletes `CHECKPOINT` to unblock `/chef:milestone`.
 
 ---
 
@@ -269,5 +274,5 @@ Final delivery gate:
 | `chef:build` | ✅ Done |
 | `chef:qa` | ✅ Done |
 | `chef:fix` | ✅ Done |
-| `chef:deliver` | 🔲 Planned |
+| `chef:deliver` | ✅ Done |
 | `chef:browser-testing` | 🔲 Planned |
