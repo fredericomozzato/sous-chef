@@ -5,6 +5,9 @@ Use this template when writing the PR description in `chef:deliver`. Populate ea
 ---
 
 ```markdown
+Closes #{issue_number}
+<!-- If the slice was not derived from a GitHub issue, remove this line entirely -->
+
 ## Summary
 
 - {N bullet-points describing what the slice delivers — user-visible outcomes, not implementation details}

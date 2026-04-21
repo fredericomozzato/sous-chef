@@ -19,7 +19,15 @@ Plan what to build next. Reads PRD and ARCHITECTURE for context, interviews the 
 
 ---
 
-## Step 1 — Guard
+## Step 1 — Sync main
+
+Ensure we are on `main` with the latest changes before any planning:
+
+```bash
+git checkout main && git pull origin main
+```
+
+## Step 2 — Guard
 
 Check that both `sous-chef/PRD.md` and `sous-chef/ARCHITECTURE.md` exist.
 
@@ -29,22 +37,29 @@ Cannot create a milestone — sous-chef/PRD.md and sous-chef/ARCHITECTURE.md are
 Run /chef:interview first to document the app requirements and stack.
 ```
 
-Check for an existing active milestone: read `sous-chef/CHECKPOINT`. If the file exists, an active milestone is already in progress — stop:
-```
-There is already an active milestone: {MILESTONE value from CHECKPOINT}
-Finish the current milestone before starting a new one.
-```
-If CHECKPOINT does not exist, no milestone is active — proceed.
+Check for an existing active milestone: read `sous-chef/CHECKPOINT`. If the file exists, parse its `STATUS` field:
 
-## Step 2 — Read context
+- `STATUS: COMPLETE` — the previous milestone's PR is open but not yet merged. Proceed, but note to the user:
+  ```
+  Note: {MILESTONE} is marked complete but its PR may not be merged yet. Continuing to plan the next milestone.
+  ```
+- Any other status, or no STATUS field — an active milestone is in progress. Stop:
+  ```
+  There is already an active milestone: {MILESTONE value from CHECKPOINT}
+  Finish the current milestone before starting a new one.
+  ```
+
+If CHECKPOINT does not exist, no milestone has ever been activated — proceed.
+
+## Step 3 — Read context
 
 Read `sous-chef/PRD.md` and `sous-chef/ARCHITECTURE.md` silently. Do not summarize them to the user.
 
-## Step 3 — Determine milestone ID
+## Step 4 — Determine milestone ID
 
 List files in `sous-chef/milestones/` (create the folder if it does not exist). Find the highest existing NNN prefix and increment by one, zero-padded to three digits. If no milestones exist, start at `001`.
 
-## Step 4 — Scope interview
+## Step 5 — Scope interview
 
 Ask one opening question:
 
@@ -56,7 +71,7 @@ Follow up only if the opening answer is too vague to propose slices — for exam
 
 Stop asking when you can propose a concrete slice list.
 
-## Step 5 — Propose slices
+## Step 6 — Propose slices
 
 Using the PRD, ARCHITECTURE, and the scope from Step 4, propose a slice breakdown following the tracer-bullet principle:
 
@@ -84,7 +99,7 @@ Ask: *"Does this breakdown make sense? Anything to split, merge, reorder, or add
 
 Iterate until the user explicitly approves. Do not write any file until confirmed.
 
-## Step 6 — Write the milestone file
+## Step 7 — Write the milestone file
 
 Use the milestone file template from `skills/shared/STRUCTURE.md`. Write to `sous-chef/milestones/{NNN}-{slug}.md`.
 
@@ -94,7 +109,7 @@ Slice numbers are per-milestone, always starting at `001`, zero-padded to three 
 - "Article model with title, body, and published_at" ✓ — "add `t.string :title` to migration" ✗
 - "Devise installation and configuration" ✓ — "add `gem 'devise'` to Gemfile" ✗
 
-## Step 7 — Activate?
+## Step 8 — Activate?
 
 Ask: *"Ready to start building? I can activate this milestone now."*
 
@@ -110,7 +125,7 @@ Writing CHECKPOINT first ensures the system is never left with an IN_PROGRESS mi
 
 **If no:** leave status as PENDING. When `chef:refine` runs later with no active CHECKPOINT, it will offer to activate a pending milestone.
 
-## Step 8 — Report
+## Step 9 — Report
 
 ```
 Milestone {NNN} created: {title}

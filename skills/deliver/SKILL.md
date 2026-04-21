@@ -60,10 +60,12 @@ Proceed only when every revision file for this slice has `status: DONE`, or ther
 
 ## Step 3 — Final quality gate
 
-Run `pre-commit-checks.sh` and capture the full output.
+All checks run inside Docker.
+
+**3a — Pre-commit checks:**
 
 ```bash
-pre-commit-checks.sh
+docker compose exec web pre-commit-checks.sh
 ```
 
 If any check fails, stop immediately. Do not attempt to fix anything. Report the failures to the user:
@@ -81,7 +83,26 @@ Relevant output:
 Fix the issues above and re-run /chef:deliver when ready.
 ```
 
-The only valid exit from Step 3 is `pre-commit-checks.sh` returning status 0. Do not proceed to Step 4 otherwise.
+The only valid exit from Step 3a is the command returning status 0.
+
+**3b — Bundler audit:**
+
+```bash
+docker compose exec web bundle exec bundler-audit check --update
+```
+
+If any vulnerabilities are found, this is a **hard block** — stop immediately:
+
+```
+Delivery blocked — bundler-audit found vulnerabilities.
+
+{gem name} {version}: {advisory summary}
+Advisory: {CVE or URL}
+
+Resolve the vulnerabilities (bump the affected gems) and re-run /chef:deliver.
+```
+
+Do not proceed to Step 4 while any CVE is open.
 
 ---
 
@@ -107,7 +128,7 @@ Read `sous-chef/issues/{MILESTONE}/{SLICE}.md` and scan the scope bullets for an
 
 ---
 
-## Step 6 — Draft the PR description
+## Step 6 — Draft and save the PR description
 
 Read `skills/deliver/resources/pr-template.md` for authoring rules, title format, and the two-section structure (`Summary` + `Test Plan`).
 
@@ -116,9 +137,23 @@ Read `sous-chef/issues/{MILESTONE}/{SLICE}.md` to source both sections:
 - **Summary** — bullets from the scope section, written as user-visible outcomes.
 - **Test Plan** — discrete checkable steps from the `Verification` section. Include the exact commands where applicable.
 
-Draft the PR title following the title rules in `PR_TEMPLATE.md`. The title describes this slice specifically.
+Draft the PR title following the title rules in the template. The title describes this slice specifically.
 
-Do not push or create anything yet.
+Save the description (without a score table — that is added in Step 6b) to:
+
+```
+tmp/screenshots/pr/{MILESTONE}/{SLICE}/description.md
+```
+
+Create the directory if it does not exist. Do not push or create anything yet.
+
+---
+
+## Step 6b — Run chef:critic
+
+Invoke `/chef:critic`. The skill runs `check-rubycritic.sh` inside Docker, handles the IMPROVED/FAIL logic, and prepends the score table to the description file saved in Step 6.
+
+Do not proceed to Step 7 until `chef:critic` completes.
 
 ---
 
@@ -161,6 +196,15 @@ EOF
 
 Record the PR number and URL from the response.
 
+If the slice had UI changes (Step 5), open the screenshots folder so the user can drag images into the PR:
+
+```bash
+uname -s
+```
+
+- `Darwin` → `open tmp/screenshots/pr/{MILESTONE}/{SLICE}/`
+- `Linux` → `xdg-open tmp/screenshots/pr/{MILESTONE}/{SLICE}/`
+
 Do not proceed to Step 9 until the PR is created successfully.
 
 ---
@@ -186,10 +230,17 @@ git commit -m "chore({MILESTONE}/{SLICE}): slice delivered, advance to next slic
 
 **If all slices are DONE** (milestone is complete):
 
-Delete CHECKPOINT:
+Update CHECKPOINT to mark the milestone complete — do not delete it:
+
+```
+MILESTONE: {MILESTONE}
+STATUS: COMPLETE
+```
+
+Commit:
 
 ```bash
-git rm sous-chef/CHECKPOINT
+git add sous-chef/CHECKPOINT
 git commit -m "chore({MILESTONE}): all slices delivered, milestone complete"
 ```
 
@@ -209,5 +260,5 @@ Delivered — {MILESTONE}/{SLICE}
 
 <if milestone complete:>
   Milestone {MILESTONE} complete — all {total} slices delivered.
-  CHECKPOINT cleared. Next step: /chef:milestone to start the next milestone.
+  CHECKPOINT marked complete. Next step: merge the PR, then /chef:milestone to start the next milestone.
 ```

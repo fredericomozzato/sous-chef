@@ -9,6 +9,8 @@ Review the `IN_REVIEW` slice in three phases: (1) build gate + completeness audi
 
 **Findings describe problems, never solutions.** State what fails, why, where, and which files are affected. How to fix it is the job of `chef:fix`.
 
+**Every finding must be reported.** The agent never filters, suppresses, or pre-judges findings as not worth fixing. Only the user may discard a finding, and only through an explicit instruction to `chef:fix`.
+
 **File layout:** read `skills/shared/STRUCTURE.md` before touching any files. Read `skills/shared/revision-template.md` before writing any revision file.
 
 ---
@@ -106,9 +108,9 @@ Finding IDs use prefix `I` (e.g. `I1`, `I2`).
 
 If both phases produced no findings, skip to Step 7.
 
-**Determine revision number:** count existing `revision-*.md` files in `sous-chef/reviews/{MILESTONE}/{SLICE}/`. Next revision = count + 1. Create the directory if it does not exist.
+**Check for an existing open revision first:** list all files matching `sous-chef/reviews/{MILESTONE}/{SLICE}/revision-*.md` and read their frontmatter. If one has `status: IN_PROGRESS`, append the Phase 1 and Phase 2 finding sections to it — do not create a new file. Do not change the frontmatter `status`.
 
-Write `sous-chef/reviews/{MILESTONE}/{SLICE}/revision-N.md` following the file template and finding format defined in `skills/shared/revision-template.md`. Read that file now if you have not already.
+**If no open revision exists:** count existing files to determine the next revision number (count + 1). Create the directory if it does not exist. Write `sous-chef/reviews/{MILESTONE}/{SLICE}/revision-N.md` following the file template and finding format defined in `skills/shared/revision-template.md`. Read that file now if you have not already.
 
 Do not touch CHECKPOINT, milestone file, or issue frontmatter — `chef:fix` takes over from here.
 
@@ -122,6 +124,13 @@ If both phases produced no findings, update in this order:
 2. Milestone file (`sous-chef/milestones/{MILESTONE}.md`): slice `STATUS: IN_REVIEW` → `STATUS: DONE`
    - If all slices in the milestone are now `DONE`: update milestone frontmatter `status: IN_PROGRESS` → `status: DONE`
 3. CHECKPOINT (`sous-chef/CHECKPOINT`): `STATUS: IN_REVIEW` → `STATUS: DONE`
+
+Commit the status updates:
+
+```bash
+git add sous-chef/issues/{MILESTONE}/{SLICE}.md sous-chef/milestones/{MILESTONE}.md sous-chef/CHECKPOINT
+git commit -m "chore({MILESTONE}/{SLICE}): mark slice DONE — clean QA pass"
+```
 
 ---
 
@@ -148,4 +157,4 @@ Slice {SLICE} marked DONE.
 <if milestone complete:>     Milestone {MILESTONE} complete. Next step: /chef:deliver.
 ```
 
-Do not open a PR or commit. Do not advance CHECKPOINT to the next slice — the user drives the next step.
+Do not open a PR. Do not advance CHECKPOINT to the next slice — the user drives the next step. If findings exist, do not commit — `chef:fix` owns that commit.

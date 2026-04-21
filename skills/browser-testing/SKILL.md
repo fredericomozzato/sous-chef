@@ -100,7 +100,7 @@ No approval needed — this is for transparency only.
 Prepare the screenshots output directory:
 
 ```
-tmp/browser-testing/{MILESTONE}/{SLICE}/
+tmp/screenshots/qa/{MILESTONE}/{SLICE}/
 ```
 
 Create it if it does not exist. Do not commit this folder — `tmp/` is gitignored.
@@ -120,21 +120,22 @@ For each scenario in the test plan, in order:
 **Screenshot naming convention:**
 
 ```
-{NNN}_{state_description}.png
+{NNN}_{state_description}_{width}.png
 ```
 
 - `NNN` — three-digit sequence, starting at `001`, incrementing across all screenshots in this run
 - `state_description` — lowercase with underscores (e.g. `article_form_empty`, `validation_error`, `article_created`)
+- `width` — viewport label (`desktop`, `tablet`, `mobile`, or pixel value like `375px`). Omit if only one viewport is tested.
 
 **Examples:**
 ```
-001_article_index_empty.png
-002_new_article_form.png
-003_validation_error.png
-004_article_created.png
+001_article_index_empty_desktop.png
+002_new_article_form_desktop.png
+003_validation_error_desktop.png
+004_article_index_empty_mobile.png
 ```
 
-Save every screenshot to `tmp/browser-testing/{MILESTONE}/{SLICE}/`.
+Save every screenshot to `tmp/screenshots/qa/{MILESTONE}/{SLICE}/`.
 
 ---
 
@@ -146,8 +147,8 @@ After all screenshots are saved, open the folder so the user can review captures
 uname -s
 ```
 
-- `Darwin` → `open tmp/browser-testing/{MILESTONE}/{SLICE}/`
-- `Linux` → `xdg-open tmp/browser-testing/{MILESTONE}/{SLICE}/`
+- `Darwin` → `open tmp/screenshots/qa/{MILESTONE}/{SLICE}/`
+- `Linux` → `xdg-open tmp/screenshots/qa/{MILESTONE}/{SLICE}/`
 
 ---
 
@@ -227,7 +228,7 @@ Do not update CHECKPOINT, the issue frontmatter, or the milestone file — this 
 Browser testing complete — {MILESTONE}/{SLICE}
 
 Flows tested:    {N}
-Screenshots:     {M} saved to tmp/browser-testing/{MILESTONE}/{SLICE}/
+Screenshots:     {M} saved to tmp/screenshots/qa/{MILESTONE}/{SLICE}/
 
 Open findings ({N} total):
   U1 · {SEVERITY} — {one-line summary}
@@ -248,7 +249,7 @@ Next step: /chef:fix to resolve findings, then /chef:qa.
 Browser testing complete — {MILESTONE}/{SLICE}
 
 Flows tested:    {N}
-Screenshots:     {M} saved to tmp/browser-testing/{MILESTONE}/{SLICE}/
+Screenshots:     {M} saved to tmp/screenshots/qa/{MILESTONE}/{SLICE}/
 
 All scenarios passed — no browser findings.
 ```

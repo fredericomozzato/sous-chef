@@ -21,7 +21,7 @@ Use the user's answer (or your own judgment if the scope is unambiguous) to defi
 
 ---
 
-## Step 2 — Define states to capture
+## Step 2 — Define states and modes to capture
 
 For each screen size, identify the relevant states from the slice scope. At minimum cover:
 
@@ -32,15 +32,17 @@ For each screen size, identify the relevant states from the slice scope. At mini
 
 Skip states that don't apply to the slice (e.g. no error state for a read-only view).
 
+**Light and dark mode:** if the application supports theme switching, capture every state in both light and dark mode. Skip if the app has no theme variations.
+
 ---
 
-## Step 3 — Delegate to a Haiku subagent
+## Step 3 — Delegate to a cheaper model subagent
 
-Spawn a subagent using the cheapest available model (Haiku on Claude, gemini-flash on Gemini) to perform the captures. Pass it:
+Spawn a subagent using the cheapest available model (Haiku on Claude, gemini-flash on Gemini) to perform the captures using the Playwright MCP. Pass it:
 
 - The app URL and any required auth/setup steps
 - The list of states and screen sizes from Steps 1–2
-- The output folder: `tmp/pr/{MILESTONE}/{SLICE}/`
+- The output folder: `tmp/screenshots/pr/{MILESTONE}/{SLICE}/`
 - The naming convention from Step 4
 
 This keeps screenshot I/O out of the main context window.
@@ -74,7 +76,7 @@ If only one screen size is captured, the width suffix can be omitted.
 All screenshots go to:
 
 ```
-tmp/pr/{MILESTONE}/{SLICE}/
+tmp/screenshots/pr/{MILESTONE}/{SLICE}/
 ```
 
 Create the directory if it does not exist. Do not commit this folder — `tmp/` should be in `.gitignore`.
@@ -87,10 +89,10 @@ After all screenshots are saved, open the folder in the system file explorer so 
 
 ```bash
 # macOS
-open tmp/pr/{MILESTONE}/{SLICE}/
+open tmp/screenshots/pr/{MILESTONE}/{SLICE}/
 
 # Linux
-xdg-open tmp/pr/{MILESTONE}/{SLICE}/
+xdg-open tmp/screenshots/pr/{MILESTONE}/{SLICE}/
 ```
 
 Detect the OS with `uname -s`: `Darwin` → macOS, `Linux` → Linux.
@@ -99,7 +101,7 @@ Detect the OS with `uname -s`: `Darwin` → macOS, `Linux` → Linux.
 
 ## Step 7 — Return to deliver
 
-Return to `chef:deliver` Step 6 (Draft the PR description). The screenshots are now available at `tmp/pr/{MILESTONE}/{SLICE}/`.
+Return to `chef:deliver` Step 6 (Draft the PR description). The screenshots are now available at `tmp/screenshots/pr/{MILESTONE}/{SLICE}/`.
 
 When drafting the PR body, add a `## Screenshots` section after `## Test Plan`. For each screenshot, add a short caption followed by the image placeholder:
 

@@ -5,7 +5,9 @@ description: Use when open QA findings need to be resolved after /chef:qa has ru
 
 # Fix — Resolve QA Findings
 
-Work through all OPEN findings in the active revision file, highest severity first. Each finding is fixed, verified with `pre-commit-checks.sh`, then committed alongside the updated revision file. The revision is closed when all findings are FIXED.
+Work through all OPEN findings in the active revision file, highest severity first. Each finding is fixed, verified with `pre-commit-checks.sh`, then committed alongside the updated revision file. The revision is closed when all findings are FIXED or DISCARDED.
+
+**Only the user may discard a finding.** The agent never suggests, offers, or autonomously marks anything as DISCARDED. If the user explicitly instructs the agent to discard a specific finding, follow the discard procedure in Step 5h. All other findings must be fixed.
 
 **Announce at start:** "Using the fix skill to resolve open findings."
 
@@ -38,6 +40,12 @@ List all files matching `sous-chef/reviews/{MILESTONE}/{SLICE}/revision-*.md`.
 - If no files found → `No revision files found. Run /chef:qa first.`
 
 Read the frontmatter of each file. Find the one with `status: IN_PROGRESS` — that is the revision to fix.
+
+If more than one has `status: IN_PROGRESS`, pick the highest-numbered one and warn the user:
+```
+Warning: multiple open revisions found. Using revision-N.md (highest-numbered).
+The others may be from a browser-testing run on a previous build — review them manually if needed.
+```
 
 If none has `status: IN_PROGRESS`:
 ```
@@ -158,6 +166,26 @@ fix({MILESTONE}/{SLICE}): resolve [ID] — <one-line summary from finding>
 ```
 
 Mark the todo for this finding complete. Move to the next finding.
+
+### h. User-initiated discard (only when explicitly instructed)
+
+If the user explicitly instructs you to discard a specific finding, do not attempt a fix. Instead:
+
+1. Update the finding's header line — change `OPEN` to `DISCARDED`:
+   ```
+   **I2** · MED · DISCARDED · `app/controllers/articles_controller.rb:34`
+   ```
+2. Append a justification line immediately after the finding's description paragraph:
+   ```
+   *Discarded — {reason provided by user}*
+   ```
+3. If this is the last OPEN finding, close the revision (update frontmatter `status: DONE`).
+4. Commit:
+   ```
+   chore({MILESTONE}/{SLICE}): discard [ID] — {one-line reason}
+   ```
+
+Never initiate or suggest a discard. Only act on an explicit user instruction naming the finding ID.
 
 ---
 

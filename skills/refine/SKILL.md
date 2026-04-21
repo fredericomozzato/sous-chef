@@ -11,18 +11,26 @@ Identify the next PENDING slice in the active milestone, survey the codebase, dr
 
 ---
 
-## Step 1 — Guard
+## Step 1 — Sync main
+
+Ensure we are on `main` with the latest changes before any planning:
+
+```bash
+git checkout main && git pull origin main
+```
+
+## Step 2 — Guard
 
 Read `sous-chef/CHECKPOINT`.
 
-**No CHECKPOINT (or file missing):**
+**No CHECKPOINT (or file missing), or CHECKPOINT has `STATUS: COMPLETE`:**
 - List `sous-chef/milestones/` for any file whose frontmatter contains `status: PENDING`
 - If found, ask: *"No milestone is active. Want me to activate {NNN-slug} so we can start refining slices?"*
-  - If yes: write CHECKPOINT (`MILESTONE: {NNN-slug}` — no SLICE or STATUS yet), set milestone `status: PENDING → IN_PROGRESS`, continue to Step 2
+  - If yes: write CHECKPOINT (`MILESTONE: {NNN-slug}` — no SLICE or STATUS yet), set milestone `status: PENDING → IN_PROGRESS`, continue to Step 3
   - If no: stop
 - If none found: stop — `No active or pending milestones. Run /chef:milestone first.`
 
-**CHECKPOINT exists — parse it:**
+**CHECKPOINT exists with active work — parse it:**
 
 CHECKPOINT may have one line (milestone only) or three lines (milestone + slice + status). Extract:
 - `MILESTONE:` → the active milestone slug (always present)
@@ -33,7 +41,7 @@ Open `sous-chef/milestones/{milestone-slug}.md`:
 - If milestone `status: DONE`: stop — `Milestone {NNN-slug} is complete. Run /chef:milestone to start the next one.`
 - If no PENDING slices remain (all are IN_PROGRESS, IN_REVIEW, or DONE): stop and report each slice's current status. Suggest `/chef:build` or `/chef:qa` as appropriate.
 
-## Step 2 — Read context
+## Step 3 — Read context
 
 Read silently — do not summarize to the user:
 - `sous-chef/PRD.md`
@@ -42,7 +50,7 @@ Read silently — do not summarize to the user:
 
 Note the active milestone's ID (`NNN`) and slug. Find the **first** slice with `STATUS: PENDING`. Note its number, name, and scope bullets.
 
-## Step 3 — Survey the codebase
+## Step 4 — Survey the codebase
 
 Identify files the slice will create or extend based on the scope bullets. Read:
 - Existing models, controllers, views, and jobs relevant to the slice
@@ -52,7 +60,7 @@ Identify files the slice will create or extend based on the scope bullets. Read:
 
 Goal: understand what already exists so the plan extends rather than duplicates.
 
-## Step 4 — Draft the plan
+## Step 5 — Draft the plan
 
 Produce a detailed plan structured as follows:
 
@@ -72,7 +80,7 @@ Produce a detailed plan structured as follows:
 
 **Branch name:** `feat/{milestone-slug}/{slice-NNN}-{slice-slug}` (e.g. `feat/oauth-authentication/002-google-oauth-provider`)
 
-## Step 5 — Present for approval
+## Step 6 — Present for approval
 
 Show the full plan. Ask:
 
@@ -80,7 +88,7 @@ Show the full plan. Ask:
 
 Revise and re-present until the user explicitly approves. Do not write any file before approval.
 
-## Step 6 — Finalize
+## Step 7 — Finalize
 
 On approval, in this order:
 
@@ -108,7 +116,7 @@ On approval, in this order:
 
 Do NOT commit. Do NOT switch branches. This step is planning only.
 
-## Step 7 — Report
+## Step 8 — Report
 
 ```
 Slice {milestone-NNN}/{slice-NNN} — {slice name}
