@@ -226,7 +226,7 @@ Updates status in three places — issue frontmatter, milestone slice, and `CHEC
 
 ---
 
-### `/chef:qa` 🔲
+### `/chef:qa` ✅
 
 Reviews the `IN_REVIEW` slice in three phases:
 1. Build gate + completeness audit — runs `pre-commit-checks.sh` and verifies every scope bullet is implemented and tested
@@ -237,9 +237,15 @@ If findings exist, writes `sous-chef/reviews/NNN-slug/NNN/revision-N.md` and han
 
 ---
 
-### `/chef:browser-testing` 🔲
+### `/chef:browser-testing` ✅
 
-Optional browser smoke test for slices that touch views. Opens the app in a real browser via Playwright, exercises the slice UI flows, and captures screenshots. Intended to complement RSpec system specs, not replace them. Run it after `/chef:qa` passes when you want visual confirmation before opening a PR.
+Optional browser smoke test for any active slice. Checks `CHECKPOINT` for the active milestone and slice (STATUS does not block — runs at `IN_PROGRESS`, `IN_REVIEW`, or `DONE`), verifies the Rails server is responding, then derives a test plan from the slice scope bullets and executes it via Playwright.
+
+For each flow: navigates to the URL, captures screenshots of the initial and result states, and logs any console errors, HTTP errors, or behaviour that contradicts the scope bullets. Screenshots are saved to `tmp/browser-testing/{milestone}/{slice}/` and the folder is opened automatically after capture.
+
+Findings use the `U` prefix (`U1`, `U2`, …) and follow the same flat inline format as `chef:qa`. If an open revision file exists, findings are appended as a `## Phase 3 — Browser Testing` section so `chef:fix` picks them up naturally. If no open revision exists and findings were found, a new revision file is created. A clean pass produces no file.
+
+**Usage:** `/chef:browser-testing` — invoke at any point during a slice to get visual confirmation of what was built.
 
 ---
 
@@ -275,4 +281,4 @@ Ships the completed slice as a PR. A milestone delivers through multiple `chef:d
 | `chef:qa` | ✅ Done |
 | `chef:fix` | ✅ Done |
 | `chef:deliver` | ✅ Done |
-| `chef:browser-testing` | 🔲 Planned |
+| `chef:browser-testing` | ✅ Done |

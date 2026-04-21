@@ -9,7 +9,7 @@ Review the `IN_REVIEW` slice in three phases: (1) build gate + completeness audi
 
 **Findings describe problems, never solutions.** State what fails, why, where, and which files are affected. How to fix it is the job of `chef:fix`.
 
-**File layout:** read `skills/shared/STRUCTURE.md` before touching any files.
+**File layout:** read `skills/shared/STRUCTURE.md` before touching any files. Read `skills/shared/revision-template.md` before writing any revision file.
 
 ---
 
@@ -108,40 +108,7 @@ If both phases produced no findings, skip to Step 7.
 
 **Determine revision number:** count existing `revision-*.md` files in `sous-chef/reviews/{MILESTONE}/{SLICE}/`. Next revision = count + 1. Create the directory if it does not exist.
 
-Write `sous-chef/reviews/{MILESTONE}/{SLICE}/revision-N.md`:
-
-```
----
-branch: {branch from issue frontmatter}
-revision: N
-status: IN_PROGRESS
-milestone: "{MILESTONE}"
-slice: "{SLICE}"
----
-
-## Phase 1 — Build gate + completeness audit
-
-<findings using flat inline format, or "No findings.">
-
-## Phase 2 — Implementation review
-
-<findings using flat inline format, or "No findings.">
-```
-
-**Flat inline finding format:**
-
-```
-**C1** · BLOCKER · OPEN · `app/models/article.rb`
-RuboCop reports 3 offenses: frozen_string_literal missing (line 1), trailing whitespace (lines 4, 12).
-
-**I1** · HIGH · OPEN · `app/controllers/articles_controller.rb:34`
-`#destroy` has no authorization check. Any authenticated user can delete any record regardless of ownership. Affects `app/controllers/articles_controller.rb:34` and the corresponding request spec which does not assert the 403 case.
-```
-
-Findings state what is wrong and why — they do not prescribe a fix.
-
-**Severities:** `BLOCKER · HIGH · MED · LOW`  
-**Statuses:** `OPEN · FIXED · DISCARDED`
+Write `sous-chef/reviews/{MILESTONE}/{SLICE}/revision-N.md` following the file template and finding format defined in `skills/shared/revision-template.md`. Read that file now if you have not already.
 
 Do not touch CHECKPOINT, milestone file, or issue frontmatter — `chef:fix` takes over from here.
 
