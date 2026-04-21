@@ -43,13 +43,15 @@ For each slice, record its number, name, and STATUS. Count total slices and DONE
 
 Apply this mapping based on the CHECKPOINT state:
 
+Note: `STATUS: COMPLETE` occurs with no `SLICE` field present — this is a milestone-level marker, not a slice status. `STATUS: DONE` always has a `SLICE` field and refers to an individual slice being delivered.
+
 | CHECKPOINT state | Last ran | Next step |
 |---|---|---|
 | `MILESTONE` only (no SLICE/STATUS) | `/chef:milestone` | `/chef:refine` |
-| `STATUS: IN_PROGRESS` | `/chef:refine` or `/chef:build` | `/chef:build` |
+| `STATUS: IN_PROGRESS` | `/chef:build` if `sous-chef/issues/{MILESTONE}/{SLICE}.md` exists, otherwise `/chef:refine` | `/chef:build` |
 | `STATUS: IN_REVIEW` | `/chef:build` | `/chef:qa` |
-| `STATUS: DONE` | `/chef:qa` | `/chef:deliver` |
-| `STATUS: COMPLETE` | `/chef:deliver` | merge PR → `/chef:milestone` |
+| `STATUS: DONE` (SLICE present) | `/chef:qa` | `/chef:deliver` |
+| `STATUS: COMPLETE` (no SLICE) | `/chef:deliver` | merge PR → `/chef:milestone` |
 
 ---
 
@@ -75,4 +77,4 @@ Rules:
   Next step: merge the open PR
              then /chef:milestone
   ```
-- Milestone STATUS for the header is derived from the milestone file's frontmatter `status` field.
+- Milestone STATUS for the header is derived from the milestone file's frontmatter `status` field, except: if CHECKPOINT has `STATUS: COMPLETE` (no SLICE), show `COMPLETE` in the header regardless of the frontmatter value.
