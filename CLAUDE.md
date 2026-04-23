@@ -14,6 +14,9 @@ The name comes from the "sous chef" metaphor: the AI agent assists the developer
 - **Rails omakase.** This plugin enforces conventions rather than offering flexibility. It is opinionated by design, targeting a specific stack and workflow, not a general-purpose tool.
 - **Convention over configuration.** Workflows should be predictable and repeatable. Avoid footguns and open-ended options where a clear Rails convention exists.
 
+### IMPORTANT
+We should always try to optimize for token efficiency. This plugin is supposed to retain as much quality while using fewer tokens. Every optimization we can add to the skills and workflow to save tokens should be studied and tested until we find a sweet spot.
+
 ## Target Stack
 
 Ruby on Rails applications. Skills and workflows should assume Rails conventions (MVC, ActiveRecord, Hotwire, etc.) unless otherwise specified.

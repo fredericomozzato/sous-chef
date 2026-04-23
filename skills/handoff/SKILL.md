@@ -111,7 +111,7 @@ branch: {BRANCH}
 session: "{SESSION_NUM}"
 created_at: {CREATED_AT}
 updated_at: {TIMESTAMP}
-status: in_progress
+status: IN_PROGRESS
 ---
 
 # Session {SESSION_NUM} — {BRANCH}

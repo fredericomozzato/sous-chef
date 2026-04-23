@@ -62,9 +62,15 @@ This is a **soft block** — do NOT proceed silently.
 
 Do NOT proceed until the user makes a conscious decision. If they choose to merge, include the "Score Trade-off" section in the PR description.
 
-### Step 3: Produce the Score Table
+### Step 3: Prepend the Score Table to the PR Description
 
-Include this table at the top of the PR description (above all other sections):
+Read `sous-chef/CHECKPOINT` to get `MILESTONE` and `SLICE`. The description file is at:
+
+```
+tmp/screenshots/pr/{MILESTONE}/{SLICE}/description.md
+```
+
+Prepend the following block to the top of that file (above all existing content):
 
 ```markdown
 | Branch Score | Minimum Score | Status |
@@ -74,7 +80,7 @@ Include this table at the top of the PR description (above all other sections):
 
 Use `PASS` when current score >= minimum score, `FAIL` otherwise.
 
-If status is `FAIL`, also include the warning block and "Score Trade-off" section:
+If status is `FAIL`, also prepend the warning block immediately after the table:
 
 ```markdown
 > [!WARNING]
@@ -85,7 +91,7 @@ If status is `FAIL`, also include the warning block and "Score Trade-off" sectio
 [Explain why the score dropped and why merging is still acceptable. Describe the smells introduced, which files are affected, and whether there is a plan to address them in a follow-up.]
 ```
 
-If status is `PASS`, delete the warning block and "Score Trade-off" section entirely.
+If status is `PASS`, do not add the warning block.
 
 ---
 
