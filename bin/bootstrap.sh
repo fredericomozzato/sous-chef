@@ -35,7 +35,7 @@ for arg in "$@"; do
       echo "  --auth=VALUE        devise | rodauth | none (default: none)"
       echo "  --jobs=VALUE        sidekiq | solid_queue | none (default: none)"
       echo "  --css=VALUE         tailwind | none (default: none)"
-      echo "  --frontend=VALUE    hotwire | react (default: hotwire)"
+      echo "  --frontend=VALUE    hotwire | react | none (default: hotwire; use none for API-only)"
       echo "  --uploads=VALUE     shrine | active_storage | none (default: none)"
       exit 0
       ;;
@@ -86,6 +86,11 @@ YARN_INSTALL_LINE=""
 if [[ "$FRONTEND" == "react" ]]; then
   YARN_INSTALL_LINE="RUN npm install -g yarn"
 fi
+CHROME_INSTALL_BLOCK=""
+if [[ "$FRONTEND" != "none" ]]; then
+  info "UI frontend detected — adding Chromium for system specs"
+  CHROME_INSTALL_BLOCK="RUN apt-get update -qq && apt-get install -y chromium chromium-driver && rm -rf /var/lib/apt/lists/*"
+fi
 cat > Dockerfile.dev << DOCKERFILE
 FROM ruby:${RUBY_MINOR}
 RUN apt-get update -qq && apt-get install -y \\
@@ -94,6 +99,7 @@ RUN apt-get update -qq && apt-get install -y \\
     nodejs \\
     && rm -rf /var/lib/apt/lists/*
 ${YARN_INSTALL_LINE}
+${CHROME_INSTALL_BLOCK}
 WORKDIR /app
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
@@ -176,8 +182,9 @@ ok "Makefile written"
 step "4/10" "Running rails new inside Docker"
 
 RAILS_FLAGS="--database=postgresql --skip-test"
-if [[ "$CSS"      == "tailwind" ]]; then RAILS_FLAGS="$RAILS_FLAGS --css=tailwind";   fi
-if [[ "$FRONTEND" == "react"    ]]; then RAILS_FLAGS="$RAILS_FLAGS --skip-hotwire";   fi
+if [[ "$FRONTEND" == "none"     ]]; then RAILS_FLAGS="$RAILS_FLAGS --api";             fi
+if [[ "$CSS"      == "tailwind" ]]; then RAILS_FLAGS="$RAILS_FLAGS --css=tailwind";    fi
+if [[ "$FRONTEND" == "react"    ]]; then RAILS_FLAGS="$RAILS_FLAGS --skip-hotwire";    fi
 
 info "Rails flags: ${RAILS_FLAGS}"
 info "Image: ruby:${RUBY_MINOR} (pull may take a moment if not cached)"
@@ -191,46 +198,57 @@ ok "Rails scaffold complete"
 # ── Step 5: Gemfile additions ─────────────────────────────────────────────────
 step "5/10" "Adding tooling gems to Gemfile"
 
-# Stack-specific top-level gems first
-CONDITIONAL_GEMS=""
-if [[ "$AUTH"    == "devise"  ]]; then CONDITIONAL_GEMS+=$'gem "devise"\n';        info "Auth: devise gem added";       fi
-if [[ "$AUTH"    == "rodauth" ]]; then CONDITIONAL_GEMS+=$'gem "rodauth-rails"\n'; info "Auth: rodauth-rails gem added"; fi
-if [[ "$JOBS"    == "sidekiq" ]]; then CONDITIONAL_GEMS+=$'gem "sidekiq"\n';       info "Jobs: sidekiq gem added";      fi
-if [[ "$UPLOADS" == "shrine"  ]]; then CONDITIONAL_GEMS+=$'gem "shrine"\n';        info "Uploads: shrine gem added";    fi
+# Build conditional gem lines (alphabetical within each group)
+TOP_LEVEL_GEMS=""
+if [[ "$AUTH"    == "devise"  ]]; then TOP_LEVEL_GEMS+=$'gem "devise"\n';        info "Auth: devise gem added";       fi
+if [[ "$AUTH"    == "rodauth" ]]; then TOP_LEVEL_GEMS+=$'gem "rodauth-rails"\n'; info "Auth: rodauth-rails gem added"; fi
+if [[ "$JOBS"    == "sidekiq" ]]; then TOP_LEVEL_GEMS+=$'gem "sidekiq"\n';       info "Jobs: sidekiq gem added";      fi
+if [[ "$UPLOADS" == "shrine"  ]]; then TOP_LEVEL_GEMS+=$'gem "shrine"\n';        info "Uploads: shrine gem added";    fi
 
-if [[ -n "$CONDITIONAL_GEMS" ]]; then
-  printf '\n%s' "$CONDITIONAL_GEMS" >> Gemfile
+# Browser testing gems — included for all UI apps, omitted for API-only
+# Build the :test group as a variable so it's always a single block,
+# alphabetically ordered, with no blank lines regardless of conditionals.
+TEST_GROUP=$'group :test do'
+if [[ "$FRONTEND" != "none" ]]; then
+  info "UI frontend — adding capybara and selenium-webdriver to test group"
+  TEST_GROUP+=$'\n  gem "capybara"'
 fi
+TEST_GROUP+=$'\n  gem "mutant-rspec", require: false'
+if [[ "$FRONTEND" != "none" ]]; then
+  TEST_GROUP+=$'\n  gem "selenium-webdriver"'
+fi
+TEST_GROUP+=$'\n  gem "simplecov",    require: false'
+TEST_GROUP+=$'\nend'
 
-# Fixed tooling groups
+[[ -n "$TOP_LEVEL_GEMS" ]] && printf '\n%s' "$TOP_LEVEL_GEMS" >> Gemfile
+
+# Write all tooling groups in one pass — alphabetical within each group,
+# each group name appears exactly once.
 info "Adding tooling gem groups (dev/test, dev, test)"
 cat >> Gemfile << 'GEMS'
 
 group :development, :test do
-  gem "rspec-rails"
+  gem "bullet"
   gem "factory_bot_rails"
   gem "faker"
-  gem "bullet"
+  gem "rspec-rails"
 end
 
 group :development do
-  gem "rubocop",                require: false
-  gem "rubocop-rails-omakase", require: false
-  gem "rubocop-rspec",         require: false
-  gem "rubocop-performance",   require: false
-  gem "erb_lint",              require: false
-  gem "rubycritic",            require: false
   gem "brakeman",              require: false
   gem "bundler-audit",         require: false
-  gem "strong_migrations"
   gem "database_consistency",  require: false
+  gem "erb_lint",              require: false
+  gem "rubocop",               require: false
+  gem "rubocop-performance",   require: false
+  gem "rubocop-rails-omakase", require: false
+  gem "rubocop-rspec",         require: false
+  gem "rubycritic",            require: false
+  gem "strong_migrations"
 end
 
-group :test do
-  gem "simplecov",    require: false
-  gem "mutant-rspec", require: false
-end
 GEMS
+printf '%s\n' "$TEST_GROUP" >> Gemfile
 ok "Gemfile updated"
 
 # ── Step 6: Build and install ─────────────────────────────────────────────────
@@ -256,12 +274,33 @@ info "Patching spec/spec_helper.rb — prepending SimpleCov"
 mv spec/spec_helper.rb.new spec/spec_helper.rb
 ok "spec/spec_helper.rb — SimpleCov prepended"
 
-# Add FactoryBot to rails_helper.rb (after the RSpec.configure opening line)
-info "Patching spec/rails_helper.rb — adding FactoryBot"
-awk '/RSpec\.configure do \|config\|/ { print; print "  config.include FactoryBot::Syntax::Methods"; next } { print }' \
-  spec/rails_helper.rb > spec/rails_helper.rb.new
+# Add FactoryBot to rails_helper.rb and enable support file auto-require
+info "Patching spec/rails_helper.rb — FactoryBot + support file loading"
+awk '
+  /Dir\[Rails\.root\.join/ { sub(/^# /, ""); print; next }
+  /RSpec\.configure do \|config\|/ { print; print "  config.include FactoryBot::Syntax::Methods"; next }
+  { print }
+' spec/rails_helper.rb > spec/rails_helper.rb.new
 mv spec/rails_helper.rb.new spec/rails_helper.rb
-ok "spec/rails_helper.rb — FactoryBot::Syntax::Methods included"
+ok "spec/rails_helper.rb — FactoryBot included, support files enabled"
+
+# System spec support — Chrome headless inside Docker (UI apps only)
+if [[ "$FRONTEND" != "none" ]]; then
+  info "Writing spec/support/system.rb — Capybara + headless Chrome"
+  mkdir -p spec/support
+  cat > spec/support/system.rb << 'SYSTEM_SPEC'
+RSpec.configure do |config|
+  config.before(:each, type: :system) do
+    driven_by :selenium, using: :headless_chrome, screen_size: [1400, 900] do |options|
+      options.add_argument("--no-sandbox")
+      options.add_argument("--disable-dev-shm-usage")
+      options.add_argument("--disable-gpu")
+    end
+  end
+end
+SYSTEM_SPEC
+  ok "spec/support/system.rb written"
+fi
 
 # Bullet in development.rb — insert block before the last bare `end`
 info "Patching config/environments/development.rb — Bullet config"
