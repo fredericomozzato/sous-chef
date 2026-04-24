@@ -25,6 +25,8 @@ Beyond the skills it will also set up a tool ecosystem to ensure code quality an
 | Git | any | Required for branch-per-slice workflow |
 | [GitHub CLI](https://cli.github.com) (`gh`) | any | Required for PR creation in `/chef:deliver` |
 | [Docker](https://www.docker.com/products/docker-desktop/) | latest | Required for `/chef:bootstrap` (runs `rails new` + `bundle` inside a container) |
+| curl | any | Required by `/chef:bootstrap` to resolve the latest Ruby version |
+| [jq](https://jqlang.org) | any | Required by `/chef:bootstrap` to parse the Ruby version API response |
 | Node.js | any | Required only for `/chef:browser-testing` (Playwright) |
 
 ## Installation

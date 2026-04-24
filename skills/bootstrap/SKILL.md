@@ -54,7 +54,7 @@ Read `sous-chef/ARCHITECTURE.md` silently. Map each `## Stack` row to a flag:
 | Stack row | Flag |
 |---|---|
 | `## App` → `Name` | `--app-name={slug}` |
-| `## App` → `Ruby version` (if present) | `--ruby={version}` (default: `3.3`) |
+| `## App` → `Ruby version` (if present) | `--ruby={version}` (omit flag to resolve dynamically) |
 | Auth | `--auth=devise` / `--auth=rodauth` / `--auth=none` |
 | Background jobs | `--jobs=sidekiq` / `--jobs=solid_queue` / `--jobs=none` |
 | CSS | `--css=tailwind` / `--css=none` |
@@ -69,7 +69,11 @@ bootstrap.sh --app-name={slug} --ruby={version} --auth={value} --jobs={value} --
 
 The script logs each step as it runs. Let its output stream to the user — do not suppress or summarize it mid-run.
 
-If the script exits non-zero, relay its last error message and stop.
+If the script exits non-zero with a "Could not resolve Ruby version" message, ask the user via `AskUserQuestion`:
+
+> *"bootstrap.sh could not determine the latest Ruby version automatically (curl or jq unavailable, or endoflife.date unreachable). Which Ruby version should we use? (e.g. 3.4.2)"*
+
+Then retry the script with the explicit `--ruby={version}` flag. For any other non-zero exit, relay the error verbatim and stop.
 
 ---
 

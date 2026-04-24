@@ -17,10 +17,6 @@ die()   { echo -e "\n${RED}${BOLD}FATAL${RESET} ${RED}$1${RESET}" >&2; exit 1; }
 # Print file path + line number on unexpected failure
 trap 'die "Unexpected failure at line $LINENO — see output above."' ERR
 
-# ── Dependency checks ─────────────────────────────────────────────────────────
-command -v curl &>/dev/null || die "curl is required but not found"
-command -v jq   &>/dev/null || die "jq is required but not found"
-
 # ── Parse flags ───────────────────────────────────────────────────────────────
 APP_NAME="" RUBY="" AUTH="none" JOBS="none" CSS="none" FRONTEND="hotwire" UPLOADS="none"
 
@@ -50,15 +46,15 @@ done
 [[ -z "$APP_NAME" ]] && die "--app-name is required"
 
 # ── Resolve Ruby version ───────────────────────────────────────────────────────
-RUBY_FALLBACK="3.4.0"
 if [[ -z "$RUBY" ]]; then
+  command -v curl &>/dev/null || die "Could not resolve Ruby version: curl not found. Pass --ruby=X.Y.Z explicitly."
+  command -v jq   &>/dev/null || die "Could not resolve Ruby version: jq not found. Pass --ruby=X.Y.Z explicitly."
   echo -e "    ${YELLOW}→${RESET}  Resolving latest stable Ruby from endoflife.date..."
   RUBY=$(curl -sf --max-time 10 https://endoflife.date/api/ruby.json \
-    | jq -r '[.[] | select(.eol == false)] | sort_by(.releaseDate) | last | .latest' 2>/dev/null || true)
-  if [[ -z "$RUBY" || "$RUBY" == "null" ]]; then
-    echo -e "    ${YELLOW}→${RESET}  Could not resolve latest Ruby — falling back to ${RUBY_FALLBACK}"
-    RUBY="$RUBY_FALLBACK"
-  fi
+    | jq -r '[.[] | select(.eol == false)] | sort_by(.releaseDate) | last | .latest' 2>/dev/null) \
+    || die "Could not resolve Ruby version: endoflife.date unreachable or returned unexpected data. Pass --ruby=X.Y.Z explicitly."
+  [[ -z "$RUBY" || "$RUBY" == "null" ]] \
+    && die "Could not resolve Ruby version: endoflife.date returned no valid release. Pass --ruby=X.Y.Z explicitly."
 fi
 RUBY_MINOR=$(echo "$RUBY" | cut -d. -f1-2)
 
