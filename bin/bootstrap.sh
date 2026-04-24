@@ -17,8 +17,12 @@ die()   { echo -e "\n${RED}${BOLD}FATAL${RESET} ${RED}$1${RESET}" >&2; exit 1; }
 # Print file path + line number on unexpected failure
 trap 'die "Unexpected failure at line $LINENO — see output above."' ERR
 
+# ── Dependency checks ─────────────────────────────────────────────────────────
+command -v curl &>/dev/null || die "curl is required but not found"
+command -v jq   &>/dev/null || die "jq is required but not found"
+
 # ── Parse flags ───────────────────────────────────────────────────────────────
-APP_NAME="" RUBY="3.3" AUTH="none" JOBS="none" CSS="none" FRONTEND="hotwire" UPLOADS="none"
+APP_NAME="" RUBY="" AUTH="none" JOBS="none" CSS="none" FRONTEND="hotwire" UPLOADS="none"
 
 for arg in "$@"; do
   case $arg in
@@ -31,7 +35,7 @@ for arg in "$@"; do
     --uploads=*)   UPLOADS="${arg#*=}"   ;;
     --help)
       echo "Usage: bootstrap.sh --app-name=<slug> [options]"
-      echo "  --ruby=VERSION      Ruby image tag (default: 3.3)"
+      echo "  --ruby=VERSION      Ruby version (default: latest stable, resolved from endoflife.date)"
       echo "  --auth=VALUE        devise | rodauth | none (default: none)"
       echo "  --jobs=VALUE        sidekiq | solid_queue | none (default: none)"
       echo "  --css=VALUE         tailwind | none (default: none)"
@@ -45,11 +49,24 @@ done
 
 [[ -z "$APP_NAME" ]] && die "--app-name is required"
 
+# ── Resolve Ruby version ───────────────────────────────────────────────────────
+RUBY_FALLBACK="3.4.0"
+if [[ -z "$RUBY" ]]; then
+  echo -e "    ${YELLOW}→${RESET}  Resolving latest stable Ruby from endoflife.date..."
+  RUBY=$(curl -sf --max-time 10 https://endoflife.date/api/ruby.json \
+    | jq -r '[.[] | select(.eol == false)] | sort_by(.releaseDate) | last | .latest' 2>/dev/null || true)
+  if [[ -z "$RUBY" || "$RUBY" == "null" ]]; then
+    echo -e "    ${YELLOW}→${RESET}  Could not resolve latest Ruby — falling back to ${RUBY_FALLBACK}"
+    RUBY="$RUBY_FALLBACK"
+  fi
+fi
+RUBY_MINOR=$(echo "$RUBY" | cut -d. -f1-2)
+
 # ── Banner ────────────────────────────────────────────────────────────────────
 echo
 echo -e "${BOLD}${CYAN}Bootstrap: ${APP_NAME}${RESET}"
 echo -e "${DIM}──────────────────────────────────────────${RESET}"
-printf "  %-14s %s\n" "Ruby:"     "$RUBY"
+printf "  %-14s %s\n" "Ruby:"     "${RUBY} (image: ruby:${RUBY_MINOR})"
 printf "  %-14s %s\n" "Auth:"     "$AUTH"
 printf "  %-14s %s\n" "Jobs:"     "$JOBS"
 printf "  %-14s %s\n" "CSS:"      "$CSS"
@@ -58,11 +75,19 @@ printf "  %-14s %s\n" "Uploads:"  "$UPLOADS"
 echo -e "${DIM}──────────────────────────────────────────${RESET}"
 
 # ── Step 3: Docker files ──────────────────────────────────────────────────────
-step "3/10" "Writing Docker files"
+step "3/10" "Writing Docker files and Ruby version files"
 
-info "Dockerfile.dev (ruby:${RUBY})"
+info "Writing .ruby-version (${RUBY})"
+echo "$RUBY" > .ruby-version
+ok ".ruby-version written"
+
+info "Writing .tool-versions (ruby ${RUBY})"
+echo "ruby $RUBY" > .tool-versions
+ok ".tool-versions written"
+
+info "Dockerfile.dev (ruby:${RUBY_MINOR})"
 cat > Dockerfile.dev << DOCKERFILE
-FROM ruby:${RUBY}
+FROM ruby:${RUBY_MINOR}
 RUN apt-get update -qq && apt-get install -y \\
     build-essential \\
     libpq-dev \\
@@ -155,11 +180,11 @@ if [[ "$CSS"      == "tailwind" ]]; then RAILS_FLAGS="$RAILS_FLAGS --css=tailwin
 if [[ "$FRONTEND" == "react"    ]]; then RAILS_FLAGS="$RAILS_FLAGS --skip-hotwire";   fi
 
 info "Rails flags: ${RAILS_FLAGS}"
-info "Image: ruby:${RUBY} (pull may take a moment if not cached)"
+info "Image: ruby:${RUBY_MINOR} (pull may take a moment if not cached)"
 cmd docker run --rm \
   -v "$(pwd):/app" \
   -w /app \
-  "ruby:${RUBY}" \
+  "ruby:${RUBY_MINOR}" \
   sh -c "gem install rails --no-document && rails new . ${RAILS_FLAGS} --force"
 ok "Rails scaffold complete"
 
