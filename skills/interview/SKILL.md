@@ -84,7 +84,17 @@ Approach with real UI/UX judgment: propose directions, show concrete options, gu
 - **Component library** (Tailwind projects) — shadcn/ui is the default recommendation; mention Flowbite/DaisyUI only if relevant.
 - **Dark mode** — ask only if the app type warrants it.
 
-**3c — Synthesize.** Present the brief (mood, palette, typography, layout, components, dark mode) and confirm before moving on.
+**3c — Synthesize.** Output the brief as a plain markdown list in your text reply — no boxes, panels, or formatted widgets. Then use `AskUserQuestion` to ask for approval. Example format:
+
+```
+Design brief:
+- Mood: calm, minimal
+- Palette: slate background, indigo primary, zinc text hierarchy
+- Typography: Inter (headings + body)
+- Layout: centered column, top nav
+- Components: shadcn/ui
+- Dark mode: no
+```
 
 ## Step 4 — Confirm
 
