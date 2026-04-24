@@ -82,14 +82,18 @@ echo "ruby $RUBY" > .tool-versions
 ok ".tool-versions written"
 
 info "Dockerfile.dev (ruby:${RUBY_MINOR})"
+YARN_INSTALL_LINE=""
+if [[ "$FRONTEND" == "react" ]]; then
+  YARN_INSTALL_LINE="RUN npm install -g yarn"
+fi
 cat > Dockerfile.dev << DOCKERFILE
 FROM ruby:${RUBY_MINOR}
 RUN apt-get update -qq && apt-get install -y \\
     build-essential \\
     libpq-dev \\
     nodejs \\
-    yarn \\
     && rm -rf /var/lib/apt/lists/*
+${YARN_INSTALL_LINE}
 WORKDIR /app
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
