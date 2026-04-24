@@ -21,6 +21,10 @@ Gather requirements through focused conversation, then produce `sous-chef/PRD.md
 
 Ask: *"What are we building? One-sentence pitch and the core problem it solves."*
 
+Then ask: *"What is the project name? This becomes the Rails app name and the expected working directory (e.g., `my-app` → directory `my-app/`, Rails constant `MyApp`)."*
+
+Capture both the slug form (lowercase-hyphenated) and the CamelCase constant form. Write both into `## App` in ARCHITECTURE.md.
+
 ## Step 2 — Requirements
 
 Work through the topics below. If the project already exists, read `Gemfile` and `package.json` first — do not ask about decided things.
@@ -96,7 +100,7 @@ Interview complete.
   sous-chef/PRD.md          — {N} features documented, all PLANNED
   sous-chef/ARCHITECTURE.md — stack locked, conventions documented
 
-Next step: run /chef:milestone to plan your first milestone.
+Next step: run /clear and then /chef:bootstrap to scaffold the Rails app and install tooling.
 ```
 
 If the user opted out of the default validation stack, flag that some chef quality-gate skills may not apply.

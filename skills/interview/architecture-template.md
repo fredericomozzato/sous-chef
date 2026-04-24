@@ -2,6 +2,13 @@
 
 ---
 
+## App
+
+- Name: {app-name}        <!-- directory slug, e.g. my-app -->
+- Rails name: {AppName}   <!-- CamelCase constant, e.g. MyApp -->
+
+---
+
 ## Stack
 
 | Layer | Choice | Notes |
