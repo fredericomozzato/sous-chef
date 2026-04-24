@@ -102,7 +102,13 @@ Summarize everything captured — app, users, MVP features, out of scope, stack,
 
 ## Step 5 — Write
 
-Write both files in one pass using the templates:
+Run `scaffold.sh` first to create the directory structure and empty files:
+
+```
+scaffold.sh
+```
+
+Then write both files in one pass using the templates:
 - `sous-chef/PRD.md` — see `prd-template.md`
 - `sous-chef/ARCHITECTURE.md` — see `architecture-template.md`
 
