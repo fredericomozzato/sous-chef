@@ -40,9 +40,7 @@ This plugin uses semantic versioning (`MAJOR.MINOR.PATCH`):
 - **MINOR** — new skills or features, backwards-compatible
 - **MAJOR** — breaking changes to existing skill interfaces
 
-Before merging to `main`, ensure:
-1. `plugin.json` `version` field reflects the correct next version
-2. A git tag matching that version (`vX.Y.Z`) is pushed after the merge
+**Always bump `plugin.json` `version` as part of any feature branch** — do not wait to be reminded. Determine the correct increment from the rules above and apply it before committing your changes.
 
 PRs are always **squash-merged**. Never push version tags from a feature branch — the squash discards those commits and the tag will point to a dangling commit. Always tag on `main` after the merge — and **never push a tag autonomously**. After the PR is merged, remind the user to tag and wait for explicit instruction before running:
 

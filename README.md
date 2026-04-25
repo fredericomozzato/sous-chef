@@ -294,3 +294,11 @@ Saves a snapshot of the current session before stepping away. Dispatches a Haiku
 Runs RubyCritic against the `app/` directory and compares the score against the project minimum stored in `.rubycritic_minimum_score`. PASS continues silently; IMPROVED auto-updates the minimum file (you commit it); FAIL soft-blocks and asks how to proceed. Produces the score table and optional Score Trade-off section for the PR description.
 
 **Usage:** `/chef:critic` — called automatically as part of `/chef:build`'s pre-commit gate, or run standalone at any point.
+
+---
+
+### `/chef:help`
+
+Prints a concise command reference: the full workflow diagram, a one-line description of every skill, and the slice lifecycle. Runs a static shell script — no LLM generation, near-zero token cost.
+
+**Usage:** `/chef:help` — run at any time to recall command order or what a skill does.
