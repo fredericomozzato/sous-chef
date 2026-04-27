@@ -351,8 +351,10 @@ ok "config/environments/test.rb — Bullet configured (raise: true)"
 
 info "Writing .rubocop.yml"
 cat > .rubocop.yml << 'RUBOCOP'
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
+
 require:
-  - rubocop-rails-omakase
   - rubocop-rspec
   - rubocop-performance
 
