@@ -229,6 +229,9 @@ TEST_GROUP+=$'\nend'
 
 [[ -n "$TOP_LEVEL_GEMS" ]] && printf '\n%s' "$TOP_LEVEL_GEMS" >> Gemfile
 
+# Remove gems that rails new already adds to avoid duplicates
+sed -i '' '/gem "brakeman"/d; /gem "rubocop-rails-omakase"/d' Gemfile
+
 # Write all tooling groups in one pass — alphabetical within each group,
 # each group name appears exactly once.
 info "Adding tooling gem groups (dev/test, dev, test)"
