@@ -78,7 +78,7 @@ printf "  %-14s %s\n" "Uploads:"  "$UPLOADS"
 echo -e "${DIM}──────────────────────────────────────────${RESET}"
 
 # ── Step 3: Docker files ──────────────────────────────────────────────────────
-step "3/10" "Writing Docker files and Ruby version files"
+step "3/11" "Writing Docker files and Ruby version files"
 
 info "Writing .ruby-version (${RUBY})"
 echo "$RUBY" > .ruby-version
@@ -182,7 +182,7 @@ MAKEFILE
 ok "Makefile written"
 
 # ── Step 4: rails new ─────────────────────────────────────────────────────────
-step "4/10" "Running rails new inside Docker"
+step "4/11" "Running rails new inside Docker"
 
 RAILS_FLAGS="--database=postgresql --skip-test"
 if [[ "$FRONTEND" == "none"     ]]; then RAILS_FLAGS="$RAILS_FLAGS --api";             fi
@@ -203,7 +203,7 @@ printf '\n# Bootstrap — local env files\n.env.development\n.env.test\n\n# Sous
 ok ".gitignore updated"
 
 # ── Step 5: Gemfile additions ─────────────────────────────────────────────────
-step "5/10" "Adding tooling gems to Gemfile"
+step "5/11" "Adding tooling gems to Gemfile"
 
 # Build conditional gem lines (alphabetical within each group)
 TOP_LEVEL_GEMS=""
@@ -258,7 +258,7 @@ printf '%s\n' "$TEST_GROUP" >> Gemfile
 ok "Gemfile updated"
 
 # ── Step 6: Build and install ─────────────────────────────────────────────────
-step "6/10" "Building Docker image and installing gems"
+step "6/11" "Building Docker image and installing gems"
 
 info "docker compose build (downloads base image + installs system packages)"
 cmd docker compose build --progress=quiet
@@ -269,7 +269,7 @@ cmd docker compose run --rm app bundle install
 ok "Gems installed"
 
 # ── Step 7: RSpec and tooling configuration ───────────────────────────────────
-step "7/10" "Configuring RSpec, SimpleCov, FactoryBot, Bullet, RuboCop"
+step "7/11" "Configuring RSpec, SimpleCov, FactoryBot, Bullet, RuboCop"
 
 info "Generating RSpec boilerplate"
 cmd docker compose run --rm app rails generate rspec:install
@@ -372,14 +372,14 @@ echo "70" > .rubycritic_minimum_score
 ok ".rubycritic_minimum_score set to 70"
 
 # ── Step 8: Database ──────────────────────────────────────────────────────────
-step "8/10" "Creating database"
+step "8/11" "Creating database"
 
 info "rails db:create — starts db service + creates ${APP_NAME}_development and ${APP_NAME}_test"
 cmd docker compose run --rm app rails db:create
 ok "Databases created: ${APP_NAME}_development, ${APP_NAME}_test"
 
 # ── Step 9: Smoke tests ───────────────────────────────────────────────────────
-step "9/10" "Smoke tests (rspec dry-run + brakeman)"
+step "9/11" "Smoke tests (rspec dry-run + brakeman)"
 
 info "[1/2] rspec --dry-run (verifies RSpec loads and config is valid)"
 cmd docker compose run --rm app bundle exec rspec --dry-run
@@ -389,8 +389,39 @@ info "[2/2] brakeman (static security analysis)"
 cmd docker compose run --rm app bundle exec brakeman -q --no-pager
 ok "Brakeman: no vulnerabilities"
 
-# ── Step 10: Commit ───────────────────────────────────────────────────────────
-step "10/10" "Initial commit"
+# ── Step 10: Integration verification ────────────────────────────────────────
+step "10/11" "Integration verification (start stack, verify server + DB)"
+
+info "Starting stack"
+cmd docker compose up -d
+ok "Containers started"
+
+info "Waiting for Rails to respond on localhost:3000 (up to 60s)"
+TRIES=30
+RESPONDED=0
+for i in $(seq 1 $TRIES); do
+  if curl -s --max-time 2 -o /dev/null http://localhost:3000; then
+    ok "Server responded (attempt ${i}/${TRIES})"
+    RESPONDED=1
+    break
+  fi
+  sleep 2
+done
+if [[ $RESPONDED -eq 0 ]]; then
+  docker compose down 2>/dev/null || true
+  die "Server did not respond after 60s — check: docker compose logs app"
+fi
+
+info "Checking DB connectivity"
+cmd docker compose exec app rails db:version
+ok "DB connected"
+
+info "Stopping stack"
+cmd docker compose down
+ok "Stack stopped"
+
+# ── Step 11: Commit ───────────────────────────────────────────────────────────
+step "11/11" "Initial commit"
 
 cmd git add -A
 cmd git commit -m "chore: initial rails setup"
