@@ -25,7 +25,7 @@ Gather requirements through focused conversation, then produce `sous-chef/PRD.md
 
 **Otherwise**, output this as plain text — no `AskUserQuestion`, no options, no widget:
 
-> *"What do you want to build?"*
+> *"Tell me what you want to build — an app, a feature, an idea. Share as much or as little as you have; we'll dig into the details together."*
 
 Wait for the user's reply before continuing.
 
