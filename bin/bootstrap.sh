@@ -354,7 +354,7 @@ cat > .rubocop.yml << 'RUBOCOP'
 inherit_gem:
   rubocop-rails-omakase: rubocop.yml
 
-require:
+plugins:
   - rubocop-rspec
   - rubocop-performance
 
