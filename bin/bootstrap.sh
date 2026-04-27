@@ -199,6 +199,10 @@ cmd docker run --rm \
   sh -c "gem install rails --no-document && rails new . ${RAILS_FLAGS} --force"
 ok "Rails scaffold complete"
 
+info "Patching .github/workflows/ci.yml — actions/checkout@v6 → @v4"
+sed -i '' 's/checkout@v6/checkout@v4/g' .github/workflows/ci.yml
+ok ".github/workflows/ci.yml patched"
+
 info "Appending entries to .gitignore"
 printf '\n# Bootstrap — local env files\n.env.development\n.env.test\n\n# Sous-chef plugin tmp\nsous-chef/tmp/**\n\n# Test coverage\ncoverage/\n' >> .gitignore
 ok ".gitignore updated"
