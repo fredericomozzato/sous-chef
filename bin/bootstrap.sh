@@ -137,6 +137,7 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgresql://postgres:password@db:5432/${APP_NAME}_development
+      TEST_DATABASE_URL: postgresql://postgres:password@db:5432/${APP_NAME}_test
       RAILS_ENV: development
     depends_on:
       - db
@@ -377,8 +378,10 @@ ok ".rubycritic_minimum_score set to 70"
 # ── Step 8: Database ──────────────────────────────────────────────────────────
 step "8/11" "Creating database"
 
-info "rails db:create — starts db service + creates ${APP_NAME}_development and ${APP_NAME}_test"
+info "rails db:create — creates ${APP_NAME}_development"
 cmd docker compose run --rm app rails db:create
+info "rails db:create (test) — creates ${APP_NAME}_test"
+cmd docker compose run --rm -e RAILS_ENV=test app rails db:create
 ok "Databases created: ${APP_NAME}_development, ${APP_NAME}_test"
 
 # ── Step 9: Smoke tests ───────────────────────────────────────────────────────
