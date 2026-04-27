@@ -297,7 +297,7 @@ if [[ "$FRONTEND" != "none" ]]; then
   cat > spec/support/system.rb << 'SYSTEM_SPEC'
 RSpec.configure do |config|
   config.before(:each, type: :system) do
-    driven_by :selenium, using: :headless_chrome, screen_size: [1400, 900] do |options|
+    driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 900 ] do |options|
       options.add_argument("--no-sandbox")
       options.add_argument("--disable-dev-shm-usage")
       options.add_argument("--disable-gpu")
