@@ -199,7 +199,7 @@ cmd docker run --rm \
 ok "Rails scaffold complete"
 
 info "Appending entries to .gitignore"
-printf '\n# Bootstrap — local env files\n.env.development\n.env.test\n\n# Sous-chef plugin tmp\nsous-chef/tmp/**\n' >> .gitignore
+printf '\n# Bootstrap — local env files\n.env.development\n.env.test\n\n# Sous-chef plugin tmp\nsous-chef/tmp/**\n\n# Test coverage\ncoverage/\n' >> .gitignore
 ok ".gitignore updated"
 
 # ── Step 5: Gemfile additions ─────────────────────────────────────────────────
