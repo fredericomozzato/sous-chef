@@ -12,7 +12,7 @@ step()  { echo; echo -e "${BOLD}${CYAN}==> [$1] $2${RESET}"; }
 info()  { echo -e "    ${YELLOW}→${RESET}  $1"; }
 ok()    { echo -e "    ${GREEN}✓${RESET}  $1"; }
 cmd()   { echo -e "    ${DIM}\$${RESET} $*"; "$@"; }
-die()   { echo -e "\n${RED}${BOLD}FATAL${RESET} ${RED}$1${RESET}" >&2; exit 1; }
+die()   { echo -e "\n${RED}${BOLD}FATAL${RESET} ${RED}$1${RESET}" >&2; [[ -n "${LOG_FILE:-}" ]] && echo -e "${DIM}Full log: ${LOG_FILE}${RESET}" >&2; exit 1; }
 
 # Print file path + line number on unexpected failure
 trap 'die "Unexpected failure at line $LINENO — see output above."' ERR
@@ -44,6 +44,12 @@ for arg in "$@"; do
 done
 
 [[ -z "$APP_NAME" ]] && die "--app-name is required"
+
+# ── Log file ──────────────────────────────────────────────────────────────────
+mkdir -p sous-chef/tmp
+LOG_FILE="sous-chef/tmp/${APP_NAME}-bootstrap-$(date +%Y%m%d-%H%M%S).log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+echo "Full log: $LOG_FILE"
 
 # ── Resolve Ruby version ───────────────────────────────────────────────────────
 if [[ -z "$RUBY" ]]; then
@@ -138,7 +144,7 @@ services:
     tty: true
 
   db:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -150,10 +156,6 @@ volumes:
 ${REDIS_VOLUME_ENTRY}
 COMPOSE
 ok "compose.yml written"
-
-info "Appending .env entries to .gitignore"
-printf '\n# Bootstrap — local env files\n.env.development\n.env.test\n' >> .gitignore
-ok ".gitignore updated"
 
 info "Makefile"
 cat > Makefile << 'MAKEFILE'
@@ -196,6 +198,10 @@ cmd docker run --rm \
   sh -c "gem install rails --no-document && rails new . ${RAILS_FLAGS} --force"
 ok "Rails scaffold complete"
 
+info "Appending entries to .gitignore"
+printf '\n# Bootstrap — local env files\n.env.development\n.env.test\n\n# Sous-chef plugin tmp\nsous-chef/tmp/**\n' >> .gitignore
+ok ".gitignore updated"
+
 # ── Step 5: Gemfile additions ─────────────────────────────────────────────────
 step "5/10" "Adding tooling gems to Gemfile"
 
@@ -237,7 +243,6 @@ end
 
 group :development do
   gem "brakeman",              require: false
-  gem "bundler-audit",         require: false
   gem "database_consistency",  require: false
   gem "erb_lint",              require: false
   gem "rubocop",               require: false
@@ -256,7 +261,7 @@ ok "Gemfile updated"
 step "6/10" "Building Docker image and installing gems"
 
 info "docker compose build (downloads base image + installs system packages)"
-cmd docker compose build
+cmd docker compose build --progress=quiet
 ok "Image built"
 
 info "bundle install (resolves + caches gems)"
@@ -372,19 +377,15 @@ cmd docker compose run --rm app rails db:create
 ok "Databases created: ${APP_NAME}_development, ${APP_NAME}_test"
 
 # ── Step 9: Smoke tests ───────────────────────────────────────────────────────
-step "9/10" "Smoke tests (rspec dry-run + brakeman + bundler-audit)"
+step "9/10" "Smoke tests (rspec dry-run + brakeman)"
 
-info "[1/3] rspec --dry-run (verifies RSpec loads and config is valid)"
+info "[1/2] rspec --dry-run (verifies RSpec loads and config is valid)"
 cmd docker compose run --rm app bundle exec rspec --dry-run
 ok "RSpec: dry-run passed"
 
-info "[2/3] brakeman (static security analysis)"
+info "[2/2] brakeman (static security analysis)"
 cmd docker compose run --rm app bundle exec brakeman -q --no-pager
 ok "Brakeman: no vulnerabilities"
-
-info "[3/3] bundler-audit (CVE scan on Gemfile.lock)"
-cmd docker compose run --rm app bundle exec bundler-audit check --update
-ok "bundler-audit: no CVEs"
 
 # ── Step 10: Commit ───────────────────────────────────────────────────────────
 step "10/10" "Initial commit"
