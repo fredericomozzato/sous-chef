@@ -11,7 +11,7 @@ Gather requirements through focused conversation, then produce `sous-chef/PRD.md
 
 ## Core rules
 
-- **Use `AskUserQuestion` for every question.** Never dump a wall of text expecting inline replies. Group related questions — max 4–5 per turn.
+- **Use `AskUserQuestion` for every question — except the opening prompt in Step 1.** Never dump a wall of text expecting inline replies. Group related questions — max 4–5 per turn.
 - **Never ask open-ended "what do you prefer?" about things you have expertise on.** When the user is uncertain, present 2–3 concrete options with a recommended default and a one-line rationale. This is the thesis of the skill.
 - **Never invent requirements.** If "standard Rails stuff" is vague, ask what it means here.
 - **Do not write files until ~95% confident.** Write both files in one pass after explicit confirmation.
@@ -23,9 +23,11 @@ Gather requirements through focused conversation, then produce `sous-chef/PRD.md
 
 **If the user passed a description inline** (e.g. `/chef:interview My app lets users...`), treat that text as the answer to the opening question and proceed directly to targeted follow-ups in Step 2.
 
-**Otherwise**, ask one open-ended question via `AskUserQuestion`:
+**Otherwise**, output this as plain text — no `AskUserQuestion`, no options, no widget:
 
-> *"What are we building? Give me an overview — features, users, the problem it solves. Write as much or as little as you like; I'll ask targeted follow-ups after."*
+> *"What do you want to build?"*
+
+Wait for the user's reply before continuing.
 
 Do not ask for the project name here. Extract it from the user's answer if mentioned; otherwise ask for it in Step 2.
 
