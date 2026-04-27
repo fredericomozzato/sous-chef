@@ -51,7 +51,8 @@ if [[ -z "$RUBY" ]]; then
   command -v jq   &>/dev/null || die "Could not resolve Ruby version: jq not found. Pass --ruby=X.Y.Z explicitly."
   echo -e "    ${YELLOW}→${RESET}  Resolving latest stable Ruby from endoflife.date..."
   RUBY=$(curl -sf --max-time 10 https://endoflife.date/api/ruby.json \
-    | jq -r '[.[] | select(.eol == false)] | sort_by(.releaseDate) | last | .latest' 2>/dev/null) \
+    | jq -r --arg today "$(date +%Y-%m-%d)" \
+    '[.[] | select(.eol == false or ((.eol | type) == "string" and .eol > $today))] | sort_by(.releaseDate) | last | .latest' 2>/dev/null) \
     || die "Could not resolve Ruby version: endoflife.date unreachable or returned unexpected data. Pass --ruby=X.Y.Z explicitly."
   [[ -z "$RUBY" || "$RUBY" == "null" ]] \
     && die "Could not resolve Ruby version: endoflife.date returned no valid release. Pass --ruby=X.Y.Z explicitly."
