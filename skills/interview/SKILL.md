@@ -12,6 +12,7 @@ Gather requirements through focused conversation, then produce `sous-chef/PRD.md
 ## Core rules
 
 - **Use `AskUserQuestion` for every question — except the opening prompt in Step 1.** Never dump a wall of text expecting inline replies. Group related questions — max 4–5 per turn.
+- **Never put UI mockups, ASCII art, diagrams, or design proposals inside `AskUserQuestion`.** The tool truncates long output. Present any visual content as plain text in your response first, then follow with a separate `AskUserQuestion` for the actual question.
 - **Never ask open-ended "what do you prefer?" about things you have expertise on.** When the user is uncertain, present 2–3 concrete options with a recommended default and a one-line rationale. This is the thesis of the skill.
 - **Never invent requirements.** If "standard Rails stuff" is vague, ask what it means here.
 - **Do not write files until ~95% confident.** Write both files in one pass after explicit confirmation.
