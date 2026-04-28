@@ -7,9 +7,12 @@ description: Gather feature requirements through interactive Q&A, then write PRD
 
 Gather requirements through focused conversation, then produce `sous-chef/PRD.md` and `sous-chef/ARCHITECTURE.md`.
 
+**Usage:** `/chef:interview` or `/chef:interview [description of what you want to build]`
+
 ## Core rules
 
-- **Use `AskUserQuestion` for every question.** Never dump a wall of text expecting inline replies. Group related questions — max 4–5 per turn.
+- **Use `AskUserQuestion` for every question — except the opening prompt in Step 1.** Never dump a wall of text expecting inline replies. Group related questions — max 4–5 per turn.
+- **Never put UI mockups, ASCII art, diagrams, or design proposals inside `AskUserQuestion`.** The tool truncates long output. Present any visual content as plain text in your response first, then follow with a separate `AskUserQuestion` for the actual question.
 - **Never ask open-ended "what do you prefer?" about things you have expertise on.** When the user is uncertain, present 2–3 concrete options with a recommended default and a one-line rationale. This is the thesis of the skill.
 - **Never invent requirements.** If "standard Rails stuff" is vague, ask what it means here.
 - **Do not write files until ~95% confident.** Write both files in one pass after explicit confirmation.
@@ -19,11 +22,21 @@ Gather requirements through focused conversation, then produce `sous-chef/PRD.md
 
 ## Step 1 — Frame
 
-Ask: *"What are we building? One-sentence pitch and the core problem it solves."*
+**If the user passed a description inline** (e.g. `/chef:interview My app lets users...`), treat that text as the answer to the opening question and proceed directly to targeted follow-ups in Step 2.
+
+**Otherwise**, output this as plain text — no `AskUserQuestion`, no options, no widget:
+
+> *"Tell me what you want to build — an app, a feature, an idea. Share as much or as little as you have; we'll dig into the details together."*
+
+Wait for the user's reply before continuing.
+
+Do not ask for the project name here. Extract it from the user's answer if mentioned; otherwise ask for it in Step 2.
 
 ## Step 2 — Requirements
 
-Work through the topics below. If the project already exists, read `Gemfile` and `package.json` first — do not ask about decided things.
+Work through the topics below with targeted `AskUserQuestion` calls. If the project already exists, read `Gemfile` and `package.json` first — do not ask about decided things.
+
+**Project name** — if not already mentioned, ask: *"What should the app be called? This becomes the Rails app name and working directory (e.g. `my-app` → directory `my-app/`, constant `MyApp`)."* Capture both the slug form (lowercase-hyphenated) and the CamelCase constant form. Write both into `## App` in ARCHITECTURE.md.
 
 **Product**
 - Users: roles, goals, technical level, permission tiers
@@ -74,7 +87,17 @@ Approach with real UI/UX judgment: propose directions, show concrete options, gu
 - **Component library** (Tailwind projects) — shadcn/ui is the default recommendation; mention Flowbite/DaisyUI only if relevant.
 - **Dark mode** — ask only if the app type warrants it.
 
-**3c — Synthesize.** Present the brief (mood, palette, typography, layout, components, dark mode) and confirm before moving on.
+**3c — Synthesize.** Output the brief as a plain markdown list in your text reply — no boxes, panels, or formatted widgets. Then use `AskUserQuestion` to ask for approval. Example format:
+
+```
+Design brief:
+- Mood: calm, minimal
+- Palette: slate background, indigo primary, zinc text hierarchy
+- Typography: Inter (headings + body)
+- Layout: centered column, top nav
+- Components: shadcn/ui
+- Dark mode: no
+```
 
 ## Step 4 — Confirm
 
@@ -82,7 +105,13 @@ Summarize everything captured — app, users, MVP features, out of scope, stack,
 
 ## Step 5 — Write
 
-Write both files in one pass using the templates:
+Run `scaffold.sh` first to create the directory structure and empty files:
+
+```
+scaffold.sh
+```
+
+Then write both files in one pass using the templates:
 - `sous-chef/PRD.md` — see `prd-template.md`
 - `sous-chef/ARCHITECTURE.md` — see `architecture-template.md`
 
@@ -96,7 +125,7 @@ Interview complete.
   sous-chef/PRD.md          — {N} features documented, all PLANNED
   sous-chef/ARCHITECTURE.md — stack locked, conventions documented
 
-Next step: run /chef:milestone to plan your first milestone.
+Next step: run /clear and then /chef:bootstrap to scaffold the Rails app and install tooling.
 ```
 
 If the user opted out of the default validation stack, flag that some chef quality-gate skills may not apply.

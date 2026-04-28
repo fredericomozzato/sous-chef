@@ -24,6 +24,9 @@ Beyond the skills it will also set up a tool ecosystem to ensure code quality an
 | Rails | 7+ | New projects are always created with the latest version |
 | Git | any | Required for branch-per-slice workflow |
 | [GitHub CLI](https://cli.github.com) (`gh`) | any | Required for PR creation in `/chef:deliver` |
+| [Docker](https://www.docker.com/products/docker-desktop/) | latest | Required for `/chef:bootstrap` (runs `rails new` + `bundle` inside a container) |
+| curl | any | Required by `/chef:bootstrap` to resolve the latest Ruby version |
+| [jq](https://jqlang.org) | any | Required by `/chef:bootstrap` to parse the Ruby version API response |
 | Node.js | any | Required only for `/chef:browser-testing` (Playwright) |
 
 ## Installation
@@ -75,9 +78,9 @@ The plugin is named Sous Chef, but I simplified the usage name to `chef` (less t
 The workflow is straightforward:
 
 ```
-mise-en-place → interview → milestone → refine → build → [browser-testing?] → qa → fix → deliver
-                                          ↑                                                  ↓
-                                          └──────────────── next slice ──────────────────────┘
+mise-en-place → interview → bootstrap → milestone → refine → build → [browser-testing?] → qa → fix → deliver
+                                                     ↑                                                  ↓
+                                                     └──────────────── next slice ──────────────────────┘
 ```
 
 `/chef:status` can be run at any point to see where you are in the current milestone.
@@ -173,6 +176,27 @@ Gathers feature requirements through interactive Q&A using `AskUserQuestion` thr
 | strong_migrations | Unsafe migration detection at boot |
 
 The user can remove tools or replace the stack — deviations are documented in `ARCHITECTURE.md` and flagged in the completion message.
+
+---
+
+### `/chef:bootstrap`
+
+Scaffolds the Rails application, Docker environment, and tooling gems using the artifacts produced by `/chef:interview`. All Rails commands run inside Docker — no local Ruby or Rails installation required.
+
+**What it does:**
+1. Guards: requires `PRD.md` + `ARCHITECTURE.md`; blocks if `Gemfile` already exists or Docker is unavailable
+2. Validates working directory against the project name recorded in ARCHITECTURE.md
+3. Writes `Dockerfile.dev` and `compose.yml` (with optional Redis when Sidekiq is in the stack)
+4. Runs `rails new` inside the official Ruby Docker image, deriving flags from the stack choices (PostgreSQL, Tailwind, Hotwire/React)
+5. Adds tooling gems to `Gemfile` (RSpec, RuboCop, Brakeman, SimpleCov, Bullet, and more)
+6. Builds the Docker image and runs `bundle install`
+7. Installs and configures RSpec (SimpleCov, FactoryBot, Bullet per environment)
+8. Writes `.rubocop.yml` and `.rubycritic_minimum_score`
+9. Creates the development database
+10. Runs smoke tests (rspec --dry-run, brakeman, bundler-audit) — stops on any failure
+11. Commits everything as `chore: initial rails setup`
+
+**Run once.** Bootstrap is a one-shot operation and guards against running on an existing Rails app.
 
 ---
 
