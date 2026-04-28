@@ -428,15 +428,19 @@ if [[ "$NEEDS_MIGRATE" == true ]]; then
 fi
 
 # ── Step 9: Smoke tests ───────────────────────────────────────────────────────
-step "9/11" "Smoke tests (rspec dry-run + brakeman)"
+step "9/11" "Smoke tests (rspec dry-run + brakeman + rubocop)"
 
-info "[1/2] rspec --dry-run (verifies RSpec loads and config is valid)"
+info "[1/3] rspec --dry-run (verifies RSpec loads and config is valid)"
 cmd docker compose run --rm app bundle exec rspec --dry-run
 ok "RSpec: dry-run passed"
 
-info "[2/2] brakeman (static security analysis)"
+info "[2/3] brakeman (static security analysis)"
 cmd docker compose run --rm app bundle exec brakeman -q --no-pager
 ok "Brakeman: no vulnerabilities"
+
+info "[3/3] rubocop --parallel (verifies linter config is valid)"
+cmd docker compose run --rm app bundle exec rubocop --parallel
+ok "RuboCop: config valid"
 
 # ── Step 10: Integration verification ────────────────────────────────────────
 step "10/11" "Integration verification (start stack, verify server + DB)"

@@ -77,12 +77,29 @@ Then retry the script with the explicit `--ruby={version}` flag. For any other n
 
 ---
 
-## Step 4 — Report
+## Step 4 — Verify and report
 
-On success, confirm:
+On success, run:
+
+```bash
+git log --oneline -1
+```
+
+Confirm the message is `chore: initial rails setup`. If it is not, tell the user the commit is missing and ask them to check the script output.
+
+Then print a structured summary using the values already in memory from Step 3:
 
 ```
-Bootstrap complete. The script committed everything as "chore: initial rails setup".
+Bootstrap complete.
+
+  App:        {name}
+  Ruby:       {ruby version}
+  Auth:       {auth}
+  Jobs:       {jobs}
+  CSS:        {css}
+  Frontend:   {frontend}
+  Uploads:    {uploads}
+  Commit:     chore: initial rails setup ✓
 
 Start the dev server:
   docker compose up
