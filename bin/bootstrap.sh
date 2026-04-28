@@ -13,6 +13,7 @@ info()  { echo -e "    ${YELLOW}→${RESET}  $1"; }
 ok()    { echo -e "    ${GREEN}✓${RESET}  $1"; }
 cmd()   { echo -e "    ${DIM}\$${RESET} $*"; "$@"; }
 die()   { echo -e "\n${RED}${BOLD}FATAL${RESET} ${RED}$1${RESET}" >&2; [[ -n "${LOG_FILE:-}" ]] && echo -e "${DIM}Full log: ${LOG_FILE}${RESET}" >&2; exit 1; }
+sed_i() { if [[ "$(uname -s)" == "Darwin" ]]; then sed -i '' "$@"; else sed -i "$@"; fi; }
 
 # Print file path + line number on unexpected failure
 trap 'die "Unexpected failure at line $LINENO — see output above."' ERR
@@ -51,19 +52,30 @@ LOG_FILE="sous-chef/tmp/${APP_NAME}-bootstrap-$(date +%Y%m%d-%H%M%S).log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 echo "Full log: $LOG_FILE"
 
-# ── Resolve Ruby version ───────────────────────────────────────────────────────
+# ── Step 1: Prerequisites ─────────────────────────────────────────────────────
+step "1/11" "Checking prerequisites"
+command -v docker &>/dev/null || die "docker not found — install Docker Desktop or Docker Engine"
+docker info &>/dev/null        || die "Docker daemon not running — start Docker and retry"
+command -v git &>/dev/null     || die "git not found — install git"
+ok "docker running, git available"
+
+# ── Step 2: Resolve Ruby version ──────────────────────────────────────────────
+step "2/11" "Resolving Ruby version"
 if [[ -z "$RUBY" ]]; then
   command -v curl &>/dev/null || die "Could not resolve Ruby version: curl not found. Pass --ruby=X.Y.Z explicitly."
   command -v jq   &>/dev/null || die "Could not resolve Ruby version: jq not found. Pass --ruby=X.Y.Z explicitly."
-  echo -e "    ${YELLOW}→${RESET}  Resolving latest stable Ruby from endoflife.date..."
+  info "Resolving latest stable Ruby from endoflife.date..."
   RUBY=$(curl -sf --max-time 10 https://endoflife.date/api/ruby.json \
     | jq -r --arg today "$(date +%Y-%m-%d)" \
     '[.[] | select(.eol == false or ((.eol | type) == "string" and .eol > $today))] | sort_by(.releaseDate) | last | .latest' 2>/dev/null) \
     || die "Could not resolve Ruby version: endoflife.date unreachable or returned unexpected data. Pass --ruby=X.Y.Z explicitly."
   [[ -z "$RUBY" || "$RUBY" == "null" ]] \
     && die "Could not resolve Ruby version: endoflife.date returned no valid release. Pass --ruby=X.Y.Z explicitly."
+else
+  info "Using specified Ruby version: ${RUBY}"
 fi
 RUBY_MINOR=$(echo "$RUBY" | cut -d. -f1-2)
+ok "Ruby: ${RUBY} (image: ruby:${RUBY_MINOR})"
 
 # ── Banner ────────────────────────────────────────────────────────────────────
 echo
@@ -98,33 +110,30 @@ if [[ "$FRONTEND" != "none" ]]; then
   info "UI frontend detected — adding Chromium for system specs"
   CHROME_INSTALL_BLOCK="RUN apt-get update -qq && apt-get install -y chromium chromium-driver && rm -rf /var/lib/apt/lists/*"
 fi
-cat > Dockerfile.dev << DOCKERFILE
-FROM ruby:${RUBY_MINOR}
-RUN apt-get update -qq && apt-get install -y \\
-    build-essential \\
-    libpq-dev \\
-    nodejs \\
-    && rm -rf /var/lib/apt/lists/*
-${YARN_INSTALL_LINE}
-${CHROME_INSTALL_BLOCK}
+{
+  printf 'FROM ruby:%s\n' "$RUBY_MINOR"
+  printf 'RUN apt-get update -qq && apt-get install -y \\\n'
+  printf '    build-essential \\\n'
+  printf '    curl \\\n'
+  printf '    libpq-dev \\\n'
+  printf '    nodejs \\\n'
+  printf '    && rm -rf /var/lib/apt/lists/*\n'
+  [[ -n "$YARN_INSTALL_LINE"    ]] && printf '%s\n' "$YARN_INSTALL_LINE"
+  [[ -n "$CHROME_INSTALL_BLOCK" ]] && printf '%s\n' "$CHROME_INSTALL_BLOCK"
+  cat << 'DOCKERFILE'
 WORKDIR /app
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
 EXPOSE 3000
 CMD ["bin/rails", "server", "-b", "0.0.0.0"]
 DOCKERFILE
+} > Dockerfile.dev
 ok "Dockerfile.dev written"
 
 info "compose.yml"
-REDIS_SERVICE_BLOCK=""
-REDIS_VOLUME_ENTRY=""
-if [[ "$JOBS" == "sidekiq" ]]; then
-  info "Sidekiq detected — adding Redis service to compose.yml"
-  REDIS_SERVICE_BLOCK=$(printf '\n  redis:\n    image: redis:7-alpine\n    volumes:\n      - redis_data:/data')
-  REDIS_VOLUME_ENTRY=$(printf '\n  redis_data:')
-fi
-
-cat > compose.yml << COMPOSE
+[[ "$JOBS" == "sidekiq" ]] && info "Sidekiq detected — adding Redis service to compose.yml"
+{
+  cat << COMPOSE
 services:
   app:
     build:
@@ -137,7 +146,6 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgresql://postgres:password@db:5432/${APP_NAME}_development
-      TEST_DATABASE_URL: postgresql://postgres:password@db:5432/${APP_NAME}_test
       RAILS_ENV: development
     depends_on:
       - db
@@ -150,12 +158,21 @@ services:
       - postgres_data:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: password
-${REDIS_SERVICE_BLOCK}
-volumes:
-  postgres_data:
-  bundle_cache:
-${REDIS_VOLUME_ENTRY}
 COMPOSE
+  if [[ "$JOBS" == "sidekiq" ]]; then
+    cat << 'REDIS'
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+REDIS
+  fi
+  printf '\nvolumes:\n'
+  printf '  postgres_data:\n'
+  printf '  bundle_cache:\n'
+  [[ "$JOBS" == "sidekiq" ]] && printf '  redis_data:\n'
+} > compose.yml
 ok "compose.yml written"
 
 info "Makefile"
@@ -199,9 +216,13 @@ cmd docker run --rm \
   sh -c "gem install rails --no-document && rails new . ${RAILS_FLAGS} --force"
 ok "Rails scaffold complete"
 
-info "Patching .github/workflows/ci.yml — actions/checkout@v6 → @v4"
-sed -i '' 's/checkout@v6/checkout@v4/g' .github/workflows/ci.yml
-ok ".github/workflows/ci.yml patched"
+if [[ -f .github/workflows/ci.yml ]]; then
+  info "Patching .github/workflows/ci.yml — actions/checkout@v6 → @v4"
+  sed_i 's/checkout@v6/checkout@v4/g' .github/workflows/ci.yml
+  ok ".github/workflows/ci.yml patched"
+else
+  info ".github/workflows/ci.yml not found — skipping patch"
+fi
 
 info "Appending entries to .gitignore"
 printf '\n# Bootstrap — local env files\n.env.development\n.env.test\n\n# Sous-chef plugin tmp\nsous-chef/tmp/**\n\n# Test coverage\ncoverage/\n' >> .gitignore
@@ -212,10 +233,11 @@ step "5/11" "Adding tooling gems to Gemfile"
 
 # Build conditional gem lines (alphabetical within each group)
 TOP_LEVEL_GEMS=""
-if [[ "$AUTH"    == "devise"  ]]; then TOP_LEVEL_GEMS+=$'gem "devise"\n';        info "Auth: devise gem added";       fi
-if [[ "$AUTH"    == "rodauth" ]]; then TOP_LEVEL_GEMS+=$'gem "rodauth-rails"\n'; info "Auth: rodauth-rails gem added"; fi
-if [[ "$JOBS"    == "sidekiq" ]]; then TOP_LEVEL_GEMS+=$'gem "sidekiq"\n';       info "Jobs: sidekiq gem added";      fi
-if [[ "$UPLOADS" == "shrine"  ]]; then TOP_LEVEL_GEMS+=$'gem "shrine"\n';        info "Uploads: shrine gem added";    fi
+if [[ "$AUTH"    == "devise"      ]]; then TOP_LEVEL_GEMS+=$'gem "devise"\n';        info "Auth: devise gem added";       fi
+if [[ "$AUTH"    == "rodauth"     ]]; then TOP_LEVEL_GEMS+=$'gem "rodauth-rails"\n'; info "Auth: rodauth-rails gem added"; fi
+if [[ "$JOBS"    == "sidekiq"     ]]; then TOP_LEVEL_GEMS+=$'gem "sidekiq"\n';       info "Jobs: sidekiq gem added";      fi
+if [[ "$JOBS"    == "solid_queue" ]]; then TOP_LEVEL_GEMS+=$'gem "solid_queue"\n';   info "Jobs: solid_queue gem added";  fi
+if [[ "$UPLOADS" == "shrine"      ]]; then TOP_LEVEL_GEMS+=$'gem "shrine"\n';        info "Uploads: shrine gem added";    fi
 
 # Browser testing gems — included for all UI apps, omitted for API-only
 # Build the :test group as a variable so it's always a single block,
@@ -235,7 +257,7 @@ TEST_GROUP+=$'\nend'
 [[ -n "$TOP_LEVEL_GEMS" ]] && printf '\n%s' "$TOP_LEVEL_GEMS" >> Gemfile
 
 # Remove gems that rails new already adds to avoid duplicates
-sed -i '' '/gem "brakeman"/d; /gem "rubocop-rails-omakase"/d' Gemfile
+sed_i '/gem "brakeman"/d; /gem "rubocop-rails-omakase"/d' Gemfile
 
 # Write all tooling groups in one pass — alphabetical within each group,
 # each group name appears exactly once.
@@ -388,6 +410,23 @@ info "rails db:create (test) — creates ${APP_NAME}_test"
 cmd docker compose run --rm -e RAILS_ENV=test app rails db:create
 ok "Databases created: ${APP_NAME}_development, ${APP_NAME}_test"
 
+NEEDS_MIGRATE=false
+if [[ "$JOBS" == "solid_queue" ]]; then
+  info "Installing Solid Queue"
+  cmd docker compose run --rm app rails generate solid_queue:install
+  NEEDS_MIGRATE=true
+fi
+if [[ "$UPLOADS" == "active_storage" ]]; then
+  info "Installing Active Storage"
+  cmd docker compose run --rm app rails active_storage:install
+  NEEDS_MIGRATE=true
+fi
+if [[ "$NEEDS_MIGRATE" == true ]]; then
+  cmd docker compose run --rm app rails db:migrate
+  cmd docker compose run --rm -e RAILS_ENV=test app rails db:migrate
+  ok "Migrations applied"
+fi
+
 # ── Step 9: Smoke tests ───────────────────────────────────────────────────────
 step "9/11" "Smoke tests (rspec dry-run + brakeman)"
 
@@ -410,7 +449,7 @@ info "Waiting for Rails to respond on localhost:3000 (up to 60s)"
 TRIES=30
 RESPONDED=0
 for i in $(seq 1 $TRIES); do
-  if curl -s --max-time 2 -o /dev/null http://localhost:3000; then
+  if docker compose exec app curl -sf --max-time 2 -o /dev/null http://localhost:3000; then
     ok "Server responded (attempt ${i}/${TRIES})"
     RESPONDED=1
     break
