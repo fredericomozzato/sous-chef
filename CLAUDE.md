@@ -35,26 +35,26 @@ Claude Code automatically adds the plugin's `bin/` directory to PATH when the pl
 
 ### Invoking `bin/` scripts in skills — required format
 
-**CRITICAL:** Always invoke `bin/` scripts inside a fenced `bash` code block. Never reference them as prose inline code (e.g. `` Run `script.sh`. ``). Prose inline code is ambiguous — the agent may try to resolve it as a file path relative to the skill directory and fail with "no such file or directory".
+**CRITICAL:** A fenced `bash` block alone is not sufficient. The agent may still construct an absolute path to the skill directory and fail with "no such file or directory". You must also tell the agent explicitly that the script is on PATH.
 
-Correct:
+Required pattern — include the inline comment and the prose note:
+
 ```
+Run the script. It is on PATH via the plugin's `bin/` directory — do not construct a path to it:
+
+\```bash
+script.sh  # on PATH via plugin bin/
+\```
+```
+
+Wrong — causes "no such file or directory" errors even with a bash block:
+```
+Run `script.sh`.
+
 \```bash
 script.sh
 \```
 ```
-
-Wrong (causes "no such file or directory" errors):
-```
-Run `script.sh`.
-```
-```
-\```
-script.sh
-\```
-```
-
-The `bash` language specifier is what signals the agent to execute the command via the shell, where PATH resolution finds the script in `bin/`.
 
 ### `bin/` scripts run on the host, not inside Docker
 

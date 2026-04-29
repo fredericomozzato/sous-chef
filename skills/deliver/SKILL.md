@@ -65,7 +65,7 @@ All checks run inside Docker.
 **3a — Pre-commit checks:**
 
 ```bash
-pre-commit-checks.sh
+pre-commit-checks.sh  # on PATH via plugin bin/
 ```
 
 If any check fails, stop immediately. Do not attempt to fix anything. Report the failures to the user:

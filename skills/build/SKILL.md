@@ -138,7 +138,7 @@ Keep commits atomic. Stage only the files changed in that step.
 > Run `pre-commit-checks.sh`. Every check must be green. Do not advance to Step 8 while any check is failing.
 
 ```bash
-pre-commit-checks.sh
+pre-commit-checks.sh  # on PATH via plugin bin/
 ```
 
 If anything fails:
