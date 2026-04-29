@@ -16,7 +16,7 @@ Gather requirements through focused conversation, then produce `sous-chef/PRD.md
 - **Never ask open-ended "what do you prefer?" about things you have expertise on.** When the user is uncertain, present 2–3 concrete options with a recommended default and a one-line rationale. This is the thesis of the skill.
 - **Never invent requirements.** If "standard Rails stuff" is vague, ask what it means here.
 - **Do not write files until ~95% confident.** Write both files in one pass after explicit confirmation.
-- **If `sous-chef/PRD.md` already exists**, stop and ask the user whether to overwrite, merge, or abort.
+- **If `sous-chef/PRD.md` already exists and contains real content** (i.e. has non-empty sections beyond the template scaffolding), stop and ask the user whether to overwrite, merge, or abort. Empty or template-only files are the expected state after `/chef:mise-en-place` — proceed without interruption.
 
 ---
 
