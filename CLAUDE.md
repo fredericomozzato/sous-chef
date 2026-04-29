@@ -67,6 +67,18 @@ Wrong: `docker compose exec web pre-commit-checks.sh`
 
 **CRITICAL:** All changes to this plugin must be made in the repo at `/Users/frederico/development/sous-chef`. Never edit files under `~/.claude/plugins/` — that is a read-only install cache that gets overwritten on plugin updates. Changes made there are lost and bypass version control entirely.
 
+## Git workflow
+
+**CRITICAL:** Never make changes directly on `main`. Always create a feature branch first, then make changes, commit, push, and open a PR. `main` is the merge target, not the working branch.
+
+```bash
+git checkout main && git pull
+git checkout -b fix/your-branch-name
+# make changes, then:
+git push -u origin fix/your-branch-name
+gh pr create ...
+```
+
 ## Versioning
 
 This plugin uses semantic versioning (`MAJOR.MINOR.PATCH`):
