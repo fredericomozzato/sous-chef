@@ -105,9 +105,9 @@ Summarize everything captured — app, users, MVP features, out of scope, stack,
 
 ## Step 5 — Write
 
-Run `scaffold.sh` first to create the directory structure and empty files:
+Run `scaffold.sh` first to create the directory structure and empty files. The script is on PATH via the plugin's `bin/` directory — do not construct a path to it:
 
-```
+```bash
 scaffold.sh
 ```
 

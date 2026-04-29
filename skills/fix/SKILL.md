@@ -115,7 +115,7 @@ Make the minimal change that resolves the finding. Do not:
 ### d. Run `pre-commit-checks.sh` and iterate until green
 
 ```bash
-pre-commit-checks.sh
+pre-commit-checks.sh  # on PATH via plugin bin/
 ```
 
 If it fails, read the error output, diagnose the root cause, adjust the implementation, and run again. Repeat until all checks pass. There is no fixed attempt limit — keep iterating as long as progress is being made (each attempt gets closer to green or reveals new information).

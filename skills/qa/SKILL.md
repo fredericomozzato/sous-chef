@@ -48,7 +48,11 @@ Note the slice name and branch from the issue frontmatter.
 
 **Build gate:**
 
-Run `pre-commit-checks.sh`. Capture the full output. Any tool failure (rubocop, rspec, brakeman, bundler-audit, database_consistency, strong_migrations) becomes a `BLOCKER` finding with the relevant output excerpt. Continue to the completeness audit regardless — do not stop on failure.
+```bash
+pre-commit-checks.sh  # on PATH via plugin bin/
+```
+
+Capture the full output. Any tool failure (rubocop, rspec, brakeman, bundler-audit, database_consistency, strong_migrations) becomes a `BLOCKER` finding with the relevant output excerpt. Continue to the completeness audit regardless — do not stop on failure.
 
 **Completeness audit:**
 

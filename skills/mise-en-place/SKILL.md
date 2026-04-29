@@ -52,7 +52,7 @@ Exit code 0 = hook is present. Any other exit = report the error and stop.
 
 ## Step 4 — Create the Project Structure
 
-Run the init script to create the `sous-chef/` folder and template files:
+Run the init script to create the `sous-chef/` folder and template files. The script is on PATH via the plugin's `bin/` directory — do not construct a path to it:
 
 ```bash
 mise-en-place.sh

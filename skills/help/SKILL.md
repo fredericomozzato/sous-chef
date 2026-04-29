@@ -5,12 +5,30 @@ description: Use when the user runs /chef:help to print the command reference an
 
 # Help — Command Reference
 
-**Announce at start:** "Using the help skill to print the command reference."
-
-Read-only. Never writes or commits anything.
+Read-only. Never writes or commits anything. No tool calls — print the reference below as your text response.
 
 ---
 
-## Step 1 — Print reference
+**Sous Chef** is a Claude Code plugin for Rails development. It guides you through a structured workflow — from requirements to shipped feature — with predictable, repeatable steps.
 
-Run `help.sh`.
+**Workflow** (run in order):
+
+1. `/chef:mise-en-place` — One-time project setup. Creates the `sous-chef/` structure and installs the session hook.
+2. `/chef:interview` — Gather requirements via Q&A. Writes `PRD.md` and `ARCHITECTURE.md`.
+3. `/chef:milestone` — Plan the next milestone as a set of vertical slices.
+4. `/chef:refine` — Expand the next slice into a step-by-step implementation plan.
+5. `/chef:build` — Implement the slice with TDD. Runs quality checks on finish.
+6. `/chef:qa` — Review the built slice. Writes findings or marks it DONE.
+7. `/chef:fix` — Resolve QA findings, highest severity first.
+8. `/chef:deliver` — Ship the DONE slice as a PR. Repeat from step 4 for the next slice.
+
+**Slice lifecycle:** `PENDING` → `IN_PROGRESS` → `IN_REVIEW` ⇄ `fix` → `DONE`
+
+**Utilities (run any time):**
+
+- `/chef:status` — Show current milestone progress and recommend the next command.
+- `/chef:bootstrap` — Scaffold the Rails app and Docker environment.
+- `/chef:browser-testing` — Playwright smoke test for the active slice.
+- `/chef:critic` — RubyCritic score check. Called automatically by `/chef:deliver`.
+- `/chef:handoff` — Save a session snapshot before stepping away.
+- `/chef:help` — Show this reference.

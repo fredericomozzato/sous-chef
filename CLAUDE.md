@@ -33,6 +33,52 @@ The plugin is registered under the name `chef` (see `.claude-plugin/plugin.json`
 ### `bin/` scripts are on PATH
 Claude Code automatically adds the plugin's `bin/` directory to PATH when the plugin is enabled. Scripts placed there (e.g., `bin/pre-commit-checks.sh`) can be invoked by bare name — `pre-commit-checks.sh` — without a path prefix. Do not hardcode `bin/` in skill instructions.
 
+### Invoking `bin/` scripts in skills — required format
+
+**CRITICAL:** A fenced `bash` block alone is not sufficient. The agent may still construct an absolute path to the skill directory and fail with "no such file or directory". You must also tell the agent explicitly that the script is on PATH.
+
+Required pattern — include the inline comment and the prose note:
+
+```
+Run the script. It is on PATH via the plugin's `bin/` directory — do not construct a path to it:
+
+\```bash
+script.sh  # on PATH via plugin bin/
+\```
+```
+
+Wrong — causes "no such file or directory" errors even with a bash block:
+```
+Run `script.sh`.
+
+\```bash
+script.sh
+\```
+```
+
+### `bin/` scripts run on the host, not inside Docker
+
+Scripts in `bin/` are host-side orchestrators. They may call `docker compose` internally, but they must never be wrapped in `docker compose exec web …`. Wrapping them in Docker breaks `git` calls and nested `docker compose` invocations inside the script.
+
+Correct: `pre-commit-checks.sh`
+Wrong: `docker compose exec web pre-commit-checks.sh`
+
+### Never edit the plugin install directory
+
+**CRITICAL:** All changes to this plugin must be made in the repo at `/Users/frederico/development/sous-chef`. Never edit files under `~/.claude/plugins/` — that is a read-only install cache that gets overwritten on plugin updates. Changes made there are lost and bypass version control entirely.
+
+## Git workflow
+
+**CRITICAL:** Never make changes directly on `main`. Always create a feature branch first, then make changes, commit, push, and open a PR. `main` is the merge target, not the working branch.
+
+```bash
+git checkout main && git pull
+git checkout -b fix/your-branch-name
+# make changes, then:
+git push -u origin fix/your-branch-name
+gh pr create ...
+```
+
 ## Versioning
 
 This plugin uses semantic versioning (`MAJOR.MINOR.PATCH`):

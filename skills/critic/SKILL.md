@@ -27,7 +27,7 @@ And exits with one of three outcomes:
 ### Step 1: Run the Check
 
 ```bash
-check-rubycritic.sh
+check-rubycritic.sh  # on PATH via plugin bin/
 ```
 
 Capture the full output — you will need the current score, minimum score, and outcome for the PR description.
