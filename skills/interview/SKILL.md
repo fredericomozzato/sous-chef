@@ -107,7 +107,7 @@ Summarize everything captured — app, users, MVP features, out of scope, stack,
 
 Run `scaffold.sh` first to create the directory structure and empty files:
 
-```
+```bash
 scaffold.sh
 ```
 

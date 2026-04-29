@@ -135,10 +135,10 @@ Keep commits atomic. Stage only the files changed in that step.
 
 > **CRITICAL — mandatory and non-negotiable:**
 >
-> Run `pre-commit-checks.sh` inside Docker. Every check must be green. Do not advance to Step 8 while any check is failing.
+> Run `pre-commit-checks.sh`. Every check must be green. Do not advance to Step 8 while any check is failing.
 
 ```bash
-docker compose exec web pre-commit-checks.sh
+pre-commit-checks.sh
 ```
 
 If anything fails:

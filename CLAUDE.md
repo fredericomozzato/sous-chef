@@ -33,6 +33,40 @@ The plugin is registered under the name `chef` (see `.claude-plugin/plugin.json`
 ### `bin/` scripts are on PATH
 Claude Code automatically adds the plugin's `bin/` directory to PATH when the plugin is enabled. Scripts placed there (e.g., `bin/pre-commit-checks.sh`) can be invoked by bare name — `pre-commit-checks.sh` — without a path prefix. Do not hardcode `bin/` in skill instructions.
 
+### Invoking `bin/` scripts in skills — required format
+
+**CRITICAL:** Always invoke `bin/` scripts inside a fenced `bash` code block. Never reference them as prose inline code (e.g. `` Run `script.sh`. ``). Prose inline code is ambiguous — the agent may try to resolve it as a file path relative to the skill directory and fail with "no such file or directory".
+
+Correct:
+```
+\```bash
+script.sh
+\```
+```
+
+Wrong (causes "no such file or directory" errors):
+```
+Run `script.sh`.
+```
+```
+\```
+script.sh
+\```
+```
+
+The `bash` language specifier is what signals the agent to execute the command via the shell, where PATH resolution finds the script in `bin/`.
+
+### `bin/` scripts run on the host, not inside Docker
+
+Scripts in `bin/` are host-side orchestrators. They may call `docker compose` internally, but they must never be wrapped in `docker compose exec web …`. Wrapping them in Docker breaks `git` calls and nested `docker compose` invocations inside the script.
+
+Correct: `pre-commit-checks.sh`
+Wrong: `docker compose exec web pre-commit-checks.sh`
+
+### Never edit the plugin install directory
+
+**CRITICAL:** All changes to this plugin must be made in the repo at `/Users/frederico/development/sous-chef`. Never edit files under `~/.claude/plugins/` — that is a read-only install cache that gets overwritten on plugin updates. Changes made there are lost and bypass version control entirely.
+
 ## Versioning
 
 This plugin uses semantic versioning (`MAJOR.MINOR.PATCH`):

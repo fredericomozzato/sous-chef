@@ -13,4 +13,6 @@ Read-only. Never writes or commits anything.
 
 ## Step 1 — Print reference
 
-Run `help.sh`.
+```bash
+help.sh
+```
