@@ -129,6 +129,8 @@ Proposed slices:
         Delivers: user stays logged in across browser restarts
 ```
 
+**Output the slice list as plain text in your response first.** Then call `AskUserQuestion` to ask for feedback — never put the slice list inside the `AskUserQuestion` call.
+
 Ask: *"Does this breakdown make sense? Anything to split, merge, reorder, or add?"*
 
 Iterate until the user explicitly approves. Do not write any file until confirmed.
