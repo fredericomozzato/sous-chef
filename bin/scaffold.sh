@@ -4,7 +4,11 @@ set -euo pipefail
 # Creates the sous-chef project structure with empty placeholder files.
 # Safe to run on an existing project — skips files that already exist.
 
-ROOT="$(pwd)/sous-chef"
+if [ -d "$(pwd)/.sous-chef" ]; then
+  ROOT="$(pwd)/.sous-chef"
+else
+  ROOT="$(pwd)/sous-chef"
+fi
 
 mkdir -p "$ROOT/milestones"
 mkdir -p "$ROOT/issues"
@@ -25,4 +29,4 @@ touch_if_missing "$ROOT/ARCHITECTURE.md"
 touch_if_missing "$ROOT/CHECKPOINT"
 
 echo ""
-echo "sous-chef/ structure ready."
+echo "$(basename "$ROOT")/ structure ready."
