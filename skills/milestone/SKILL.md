@@ -83,14 +83,36 @@ Follow up only if the opening answer is too vague to propose slices — for exam
 
 Stop asking when you can propose a concrete slice list.
 
-## Step 7 — Propose slices
+## Step 7 — Check for Rails app
 
-Using the PRD, ARCHITECTURE, and the scope from Step 5, propose a slice breakdown following the tracer-bullet principle:
+Before proposing slices, check whether a `Gemfile` exists in the current directory:
+
+```bash
+test -f Gemfile && echo "exists" || echo "missing"
+```
+
+Keep this result in mind for the next step. Do not report it to the user.
+
+## Step 8 — Propose slices
+
+Using the PRD, ARCHITECTURE, and the scope from Step 6, propose a slice breakdown following the tracer-bullet principle:
 
 - Each slice delivers a working vertical increment — something the user can see or interact with
 - Slices are ordered so each one builds on the previous
 - No slice assembles a single horizontal layer in isolation
 - The first slice should be the thinnest possible walking skeleton: runnable, visible, end-to-end
+
+**If the `Gemfile` was missing in Step 7**, always prepend a bootstrap slice as `001` regardless of the milestone scope:
+
+```
+  001 — Bootstrap the application
+        Delivers: Rails app and Docker environment ready for development
+        Note: run /chef:bootstrap to complete this slice — do not scaffold manually
+```
+
+Then number the feature slices starting at `002`.
+
+**If the `Gemfile` exists**, propose feature slices starting at `001` as normal.
 
 Present as a numbered list with a one-line "delivers" for each:
 
@@ -107,11 +129,13 @@ Proposed slices:
         Delivers: user stays logged in across browser restarts
 ```
 
+**Output the slice list as plain text in your response first.** Then call `AskUserQuestion` to ask for feedback — never put the slice list inside the `AskUserQuestion` call.
+
 Ask: *"Does this breakdown make sense? Anything to split, merge, reorder, or add?"*
 
 Iterate until the user explicitly approves. Do not write any file until confirmed.
 
-## Step 8 — Write the milestone file
+## Step 9 — Write the milestone file
 
 Use the milestone file template from `skills/shared/STRUCTURE.md`. Write to `$SC_DIR/milestones/{NNN}-{slug}.md`.
 
@@ -121,7 +145,7 @@ Slice numbers are per-milestone, always starting at `001`, zero-padded to three 
 - "Article model with title, body, and published_at" ✓ — "add `t.string :title` to migration" ✗
 - "Devise installation and configuration" ✓ — "add `gem 'devise'` to Gemfile" ✗
 
-## Step 9 — Activate?
+## Step 10 — Activate?
 
 Ask: *"Ready to start building? I can activate this milestone now."*
 
@@ -137,7 +161,7 @@ Writing CHECKPOINT first ensures the system is never left with an IN_PROGRESS mi
 
 **If no:** leave status as PENDING. When `chef:refine` runs later with no active CHECKPOINT, it will offer to activate a pending milestone.
 
-## Step 10 — Report
+## Step 11 — Report
 
 ```
 Milestone {NNN} created: {title}

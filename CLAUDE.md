@@ -82,9 +82,11 @@ gh pr create ...
 ## Versioning
 
 This plugin uses semantic versioning (`MAJOR.MINOR.PATCH`):
-- **PATCH** — bug fixes, typos, non-functional changes
-- **MINOR** — new skills or features, backwards-compatible
+- **PATCH** — bug fixes, typos, non-functional changes, and behavioral additions *within* existing skills
+- **MINOR** — introducing an entirely new skill, backwards-compatible
 - **MAJOR** — breaking changes to existing skill interfaces
+
+Adding steps, guards, or new behavior to an existing skill is **PATCH**, not MINOR — even if the change is meaningful. MINOR is reserved for new skills.
 
 **Always bump `plugin.json` `version` as part of any feature branch** — do not wait to be reminded. Determine the correct increment from the rules above and apply it before committing your changes.
 
