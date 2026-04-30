@@ -6,8 +6,10 @@ Reference for all skills that read or write project files. When in doubt about w
 
 ## Directory layout
 
+The project directory is named either `sous-chef/` or `.sous-chef/` (hidden). Skills detect which one exists before any file access — check `sous-chef/` first, then `.sous-chef/`. Refer to the detected path as `$SC_DIR` throughout.
+
 ```
-sous-chef/
+$SC_DIR/                          ← sous-chef/ or .sous-chef/
   PRD.md                          ← app requirements (written by chef:interview)
   ARCHITECTURE.md                 ← stack and conventions (written by chef:interview)
   CHECKPOINT                      ← active milestone slug, one line (see below)
@@ -43,7 +45,7 @@ Examples: "OAuth Authentication" → `oauth-authentication`, "2FA Setup" → `2f
 
 ## CHECKPOINT
 
-A plain-text file at `sous-chef/CHECKPOINT`. It is the single source of truth for what is being worked on. Skills read it first — no file scanning needed.
+A plain-text file at `$SC_DIR/CHECKPOINT`. It is the single source of truth for what is being worked on. Skills read it first — no file scanning needed.
 
 **When a milestone is activated but no slice has been refined yet** (written by `chef:milestone`):
 ```
@@ -68,7 +70,7 @@ Rules:
 
 ## Milestone file
 
-`sous-chef/milestones/NNN-slug.md`
+`$SC_DIR/milestones/NNN-slug.md`
 
 ```markdown
 ---
@@ -98,7 +100,7 @@ Scope:
 
 ## Issue file
 
-`sous-chef/issues/NNN-slug/NNN.md`
+`$SC_DIR/issues/NNN-slug/NNN.md`
 
 Written by `chef:refine`. Contains the full implementation plan for a single slice: files to touch, schema changes, test cases by name. This is the only place where implementation details live.
 
@@ -118,7 +120,7 @@ Status transitions: `IN_PROGRESS` → `IN_REVIEW` (by `chef:build`) → `DONE` (
 
 ## Review file
 
-`sous-chef/reviews/NNN-slug/NNN/revision-N.md`
+`$SC_DIR/reviews/NNN-slug/NNN/revision-N.md`
 
 Written by `chef:qa`. Contains findings from reviewing an IN_REVIEW slice. Revision number increments each time `chef:qa` re-reviews after `chef:fix` resolves findings.
 
