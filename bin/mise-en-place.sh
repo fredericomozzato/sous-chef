@@ -4,7 +4,7 @@
 
 set -e
 
-BASE="sous-chef"
+BASE="${1:-sous-chef}"
 
 mkdir -p "$BASE/milestones" "$BASE/issues" "$BASE/reviews"
 
@@ -61,4 +61,4 @@ else
 fi
 
 echo ""
-echo "sous-chef/ ready. Next step: run /chef:interview to plan your features."
+echo "$BASE/ ready. Next step: run /chef:interview to plan your features."

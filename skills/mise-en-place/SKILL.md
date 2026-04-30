@@ -50,15 +50,33 @@ jq -e '.hooks.SessionStart[]?.hooks[]? | select(.type == "command" and (.command
 
 Exit code 0 = hook is present. Any other exit = report the error and stop.
 
-## Step 4 — Create the Project Structure
+## Step 4 — Choose directory style
 
-Run the init script to create the `sous-chef/` folder and template files. The script is on PATH via the plugin's `bin/` directory — do not construct a path to it:
+Check whether a sous-chef project directory already exists in the current working directory:
 
 ```bash
-mise-en-place.sh
+ls -d sous-chef/ .sous-chef/ 2>/dev/null | head -1
 ```
 
-## Step 5 — Confirm to User
+- **`sous-chef/` or `.sous-chef/` found** → use the existing one as `$SC_DIR`. Skip the question.
+- **Neither found** → ask the user using `AskUserQuestion`:
+
+  > "Should the sous-chef project folder be visible or hidden?
+  >
+  > - `sous-chef/` — visible, appears in file listings (recommended for most projects)
+  > - `.sous-chef/` — hidden, keeps the project root tidier"
+
+  Set `$SC_DIR` to `sous-chef` or `.sous-chef` based on their answer.
+
+## Step 5 — Create the Project Structure
+
+Run the init script, passing the chosen directory name as the first argument. The script is on PATH via the plugin's `bin/` directory — do not construct a path to it:
+
+```bash
+mise-en-place.sh $SC_DIR  # on PATH via plugin bin/
+```
+
+## Step 6 — Confirm to User
 
 Report both outcomes together:
 
@@ -68,12 +86,12 @@ Mise en place complete.
 Claude Code hook: <added to ~/.claude/settings.json | already configured>
   SessionStart → progress-load.sh (auto-loads session context)
 
-sous-chef/ structure: <created | already exists>
-  sous-chef/PRD.md
-  sous-chef/ARCHITECTURE.md
-  sous-chef/milestones/
-  sous-chef/issues/
-  sous-chef/reviews/
+$SC_DIR/ structure: <created | already exists>
+  $SC_DIR/PRD.md
+  $SC_DIR/ARCHITECTURE.md
+  $SC_DIR/milestones/
+  $SC_DIR/issues/
+  $SC_DIR/reviews/
 
 Next steps:
   1. Restart Claude Code (or open /hooks) to activate the session hook
