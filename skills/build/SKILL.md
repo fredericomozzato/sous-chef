@@ -109,7 +109,7 @@ Follow the plan's **Implementation order** exactly — step by step, in numbered
 
 **Red-green cycle per step:**
 
-1. Write the failing RSpec example(s) for the step.
+1. Write the failing RSpec example(s) for the step. Each example must correspond to a scenario in the **Behavioral specs** section of the issue plan — use the scenario name verbatim as the example description and assert the THEN clause directly. Do not write examples that have no corresponding scenario.
 2. Run specs inside Docker — confirm they fail (red). If they pass without implementation, the test is wrong; fix it before proceeding.
    ```bash
    docker compose exec web rspec {spec file path}

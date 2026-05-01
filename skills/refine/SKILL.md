@@ -60,19 +60,56 @@ Identify files the slice will create or extend based on the scope bullets. Read:
 
 Goal: understand what already exists so the plan extends rather than duplicates.
 
-## Step 5 — Draft the plan
+## Step 5 — Draft behavioral specs
 
-Produce a detailed plan structured as follows:
+Using the scope bullets as input, write the Gherkin scenarios that define the observable behavior of this slice.
+
+**Rules:**
+
+- Cover the happy path and every key edge case (invalid input, missing auth, boundary conditions)
+- Describe what a user sees or what the system returns — never internal class calls or ActiveRecord details
+- One scenario per distinct behavior; do not bundle multiple outcomes into one scenario
+- Keep scenario names short enough to become RSpec example descriptions verbatim
+
+```gherkin
+# Good — observable, user-facing
+Scenario: Submit valid recipe form
+  GIVEN I am logged in as a chef
+  WHEN I submit the new recipe form with valid data
+  THEN the recipe appears in my recipe list
+  AND I see "Recipe created"
+
+# Bad — describes implementation
+Scenario: RecipesController create action
+  GIVEN valid params are posted to RecipesController#create
+  WHEN ActiveRecord saves the record
+  THEN the response status is 302
+```
+
+## Step 6 — Present specs for approval
+
+Show only the behavioral specs. Ask:
+
+> "Do these scenarios cover the expected behavior? Any changes, additions, or removals before I draft the implementation plan?"
+
+Revise and re-present until the user explicitly approves. **Do not draft implementation details until the specs are approved.**
+
+## Step 7 — Draft the implementation plan
+
+With approved specs in hand, produce the remaining plan sections:
 
 | Section | Content |
 |---------|---------|
 | **Context** | What has been built; how this slice connects to prior work |
 | **Scope** | Exact deliverables from the milestone slice bullets |
+| **Behavioral specs** | The approved Gherkin scenarios (copied verbatim) |
 | **Schema changes** | Migration details — table name, columns, types, constraints, indexes. Omit if no DB changes |
 | **Files to create/modify** | One subsection per file: path, purpose, key class/method signatures, SQL patterns if applicable |
-| **RSpec tests** | One subsection per spec file: each example by name and what it verifies (no vague "add appropriate tests") |
+| **RSpec tests** | One subsection per spec file: each example by name and what it verifies — derived directly from the behavioral specs |
 | **Implementation order** | Numbered steps, TDD-first: write failing specs → implement → `pre-commit-checks.sh` → commit |
 | **Verification** | Exact commands and expected output to confirm the slice is done |
+
+The RSpec tests section must map one-to-one with the scenarios: each scenario becomes one or more named examples. No RSpec example may exist without a corresponding scenario, and no scenario may be left without a covering example.
 
 **Rails conventions from ARCHITECTURE.md apply without exception.** Honour whatever the user's project documents there.
 
@@ -80,7 +117,7 @@ Produce a detailed plan structured as follows:
 
 **Branch name:** `feat/{milestone-slug}/{slice-NNN}-{slice-slug}` (e.g. `feat/oauth-authentication/002-google-oauth-provider`)
 
-## Step 6 — Present for approval
+## Step 8 — Present plan for approval
 
 Show the full plan. Ask:
 
@@ -88,7 +125,7 @@ Show the full plan. Ask:
 
 Revise and re-present until the user explicitly approves. Do not write any file before approval.
 
-## Step 7 — Finalize
+## Step 9 — Finalize
 
 On approval, in this order:
 
@@ -116,7 +153,7 @@ On approval, in this order:
 
 Do NOT commit. Do NOT switch branches. This step is planning only.
 
-## Step 8 — Report
+## Step 10 — Report
 
 ```
 Slice {milestone-NNN}/{slice-NNN} — {slice name}
