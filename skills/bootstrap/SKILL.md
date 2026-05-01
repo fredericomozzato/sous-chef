@@ -101,8 +101,11 @@ Bootstrap complete.
   Uploads:    {uploads}
   Commit:     chore: initial rails setup ✓
 
-Start the dev server:
-  docker compose up
+Start the server:   make run
+Stop the server:    make stop
+Run tests:          make test
+Open a shell:       make shell
 
 Next step: run /chef:milestone to plan your first milestone.
+Tip: run /clear to free up context first.
 ```

@@ -164,4 +164,5 @@ Slice {milestone-NNN}/{slice-NNN} — {slice name}
   Milestone progress: {X}/{total} slices PENDING
 
 Next step: /chef:build to implement this slice.
+Tip: run /clear to free up context first.
 ```

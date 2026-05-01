@@ -160,11 +160,14 @@ Open findings (N total):
 
 Revision file: sous-chef/reviews/{MILESTONE}/{SLICE}/revision-N.md
 Next step: /chef:fix to resolve findings, then /chef:qa again.
+Tip: run /clear to free up context first.
 
 <if clean:>
 Slice {SLICE} marked DONE.
 <if pending slices remain:>  Next step: /chef:refine to plan the next slice.
+<if pending slices remain:>  Tip: run /clear to free up context first.
 <if milestone complete:>     Milestone {MILESTONE} complete. Next step: /chef:deliver.
+<if milestone complete:>     Tip: run /clear to free up context first.
 ```
 
 Do not open a PR. Do not advance CHECKPOINT to the next slice — the user drives the next step. If findings exist, do not commit — `chef:fix` owns that commit.

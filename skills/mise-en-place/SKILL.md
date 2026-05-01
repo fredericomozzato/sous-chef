@@ -96,4 +96,5 @@ $SC_DIR/ structure: <created | already exists>
 Next steps:
   1. Restart Claude Code (or open /hooks) to activate the session hook
   2. Run /chef:interview to plan your features
+Tip: run /clear to free up context before /chef:interview.
 ```

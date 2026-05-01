@@ -190,6 +190,7 @@ Verification:
 
 All checks pass. Slice is IN_REVIEW.
 Next step: /chef:qa to review the implementation.
+Tip: run /clear to free up context first.
 ```
 
 Do not open a PR. Do not run `/chef:qa` automatically. Hand off to the user.

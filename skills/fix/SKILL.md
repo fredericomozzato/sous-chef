@@ -200,6 +200,7 @@ Fixed N findings:
 
 pre-commit-checks.sh passes. Revision status: DONE.
 Next step: /chef:qa — a clean pass will mark the slice DONE.
+Tip: run /clear to free up context first.
 ```
 
 If any finding was skipped because `pre-commit-checks.sh` failed, say so clearly and do not claim the revision is DONE.

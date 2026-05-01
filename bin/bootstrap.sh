@@ -177,13 +177,16 @@ ok "compose.yml written"
 
 info "Makefile"
 cat > Makefile << 'MAKEFILE'
-.PHONY: build run shell test lint logs
+.PHONY: build run stop shell test lint logs
 
 build:
 	docker compose build
 
 run:
 	docker compose up -d
+
+stop:
+	docker compose down
 
 shell:
 	docker compose exec app bash
@@ -484,6 +487,11 @@ ok "Committed: chore: initial rails setup"
 echo
 echo -e "${BOLD}${GREEN}Bootstrap complete.${RESET}"
 echo
-echo "  Start the dev server:   docker compose up"
-echo "  Next step:              /chef:milestone"
+echo "  Start the server:   make run"
+echo "  Stop the server:    make stop"
+echo "  Run tests:          make test"
+echo "  Open a shell:       make shell"
+echo
+echo "  Next step:          /chef:milestone"
+echo "  Tip: run /clear to free up context first."
 echo

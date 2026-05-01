@@ -176,4 +176,5 @@ Milestone {NNN} created: {title}
 Status: {PENDING | IN_PROGRESS}
 
 Next step: /chef:refine to plan and expand the first slice.
+Tip: run /clear to free up context first.
 ```
