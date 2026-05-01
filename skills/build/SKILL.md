@@ -107,27 +107,27 @@ If the branch already existed and was checked out directly (no fresh creation fr
 
 Follow the plan's **Implementation order** exactly — step by step, in numbered sequence. Do not reorder steps, skip steps, or batch multiple steps into one commit.
 
-**Red-green cycle per step:**
+Handle any prerequisites (migrations, factories, routes) listed before the numbered steps first, committing each as `chore({MILESTONE}/{SLICE}): <description>`.
 
-1. Write the failing RSpec example(s) for the step.
-2. Run specs inside Docker — confirm they fail (red). If they pass without implementation, the test is wrong; fix it before proceeding.
+**Red-green cycle — one scenario per step, no exceptions:**
+
+1. Write the RSpec example for this step's scenario only. Use the scenario name verbatim as the example description. Assert the THEN clause directly. Do not write examples for future steps.
+2. Run specs — confirm this example fails (red). If it passes without implementation, the test is wrong; fix it before proceeding.
    ```bash
    docker compose exec web rspec {spec file path}
    ```
-3. Write the minimum implementation to make them pass.
-4. Run specs again — confirm they pass (green).
+3. Write the minimum implementation to make this example pass. Do not implement anything beyond what this scenario requires.
+4. Run specs — confirm this example passes (green) and no previously passing examples regressed.
    ```bash
    docker compose exec web rspec {spec file path}
    ```
+5. Commit.
+   ```bash
+   git add <specific files>
+   git commit -m "feat({MILESTONE}/{SLICE}): <scenario name>"
+   ```
 
-**Commit after each numbered step passes:**
-
-```bash
-git add <specific files>
-git commit -m "feat({MILESTONE}/{SLICE}): <short description of step>"
-```
-
-Keep commits atomic. Stage only the files changed in that step.
+Repeat for the next step. Never carry uncommitted work into the next scenario.
 
 ---
 

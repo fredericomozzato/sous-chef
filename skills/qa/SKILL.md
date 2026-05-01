@@ -56,13 +56,19 @@ Capture the full output. Any tool failure (rubocop, rspec, brakeman, bundler-aud
 
 **Completeness audit:**
 
-Read `git diff main...HEAD` and the scope bullets from the issue file. For each bullet verify:
+Read `git diff main...HEAD`, the scope bullets, and the **Behavioral specs** section from the issue file. For each scope bullet verify:
 - A corresponding code path exists
 - An RSpec example exercises it (unless the bullet is purely visual layout with no behaviour)
 - Test assertions can actually fail — not trivially true
 
+For each Gherkin scenario in the Behavioral specs verify:
+- A named RSpec example exists whose description matches the scenario name
+- The example asserts the scenario's THEN clause — not a weaker or unrelated condition
+
 A scope bullet with no code path → gap finding (`BLOCKER` or `HIGH` depending on whether it is load-bearing).  
 A scope bullet with no RSpec coverage → `MED` finding.  
+A Gherkin scenario with no matching RSpec example → `HIGH` finding.  
+A Gherkin scenario whose example does not assert the THEN clause → `MED` finding.  
 An always-passing assertion → `MED` finding.
 
 Finding IDs use prefix `C` (e.g. `C1`, `C2`).
