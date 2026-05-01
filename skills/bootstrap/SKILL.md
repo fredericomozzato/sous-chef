@@ -47,7 +47,7 @@ Wait for the user's answer before proceeding.
 
 ---
 
-## Step 3 — Parse and run
+## Step 3 — Parse, write CLAUDE.md, and run
 
 Read `sous-chef/ARCHITECTURE.md` silently. Map each `## Stack` row to a flag:
 
@@ -61,13 +61,66 @@ Read `sous-chef/ARCHITECTURE.md` silently. Map each `## Stack` row to a flag:
 | Frontend | `--frontend=react` / `--frontend=hotwire` |
 | File uploads | `--uploads=shrine` / `--uploads=active_storage` / `--uploads=none` |
 
-Run:
+Then read `sous-chef/PRD.md` and extract the opening paragraph (the text between the `# PRD — {name}` heading and the first `---`). This is the app description.
+
+Write `CLAUDE.md` in the CWD using this template — substitute all `{placeholders}` with real values:
+
+```markdown
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project
+
+{App Name} — {opening paragraph from PRD}
+
+## Stack
+
+| Layer | Choice |
+|---|---|
+| Ruby | {version} |
+| Auth | {auth} |
+| Background jobs | {jobs} |
+| CSS | {css} |
+| Frontend | {frontend} |
+| File uploads | {uploads} |
+
+## Commands
+
+\`\`\`bash
+make run      # start dev server (docker compose up -d)
+make stop     # stop dev server (docker compose down)
+make test     # run full test suite
+make lint     # run rubocop
+make shell    # open a shell in the app container
+make logs     # tail app logs
+make build    # rebuild docker image
+\`\`\`
+
+Run a single spec:
+
+\`\`\`bash
+docker compose exec app bundle exec rspec spec/path/to/spec.rb
+\`\`\`
+
+## Project structure
+
+`sous-chef/` holds all design documents managed by the chef plugin:
+- `PRD.md` — product requirements
+- `ARCHITECTURE.md` — stack decisions and app structure
+- `CHECKPOINT` — active milestone and slice state
+- `milestones/` — milestone plans
+- `issues/` — slice implementation plans
+- `reviews/` — QA revision notes
+```
+
+Then run:
 
 ```bash
 bootstrap.sh --app-name={slug} --ruby={version} --auth={value} --jobs={value} --css={value} --frontend={value} --uploads={value}
 ```
 
-The script logs each step as it runs. Let its output stream to the user — do not suppress or summarize it mid-run.
+The script logs each step as it runs. Let its output stream to the user — do not suppress or summarize it mid-run. The script's final `git add -A` will include `CLAUDE.md` in the `chore: initial rails setup` commit.
 
 If the script exits non-zero with a "Could not resolve Ruby version" message, ask the user via `AskUserQuestion`:
 
@@ -100,6 +153,7 @@ Bootstrap complete.
   Frontend:   {frontend}
   Uploads:    {uploads}
   Commit:     chore: initial rails setup ✓
+  CLAUDE.md:  written ✓
 
 Start the server:   make run
 Stop the server:    make stop
