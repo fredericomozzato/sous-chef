@@ -106,7 +106,7 @@ With approved specs in hand, produce the remaining plan sections:
 | **Schema changes** | Migration details — table name, columns, types, constraints, indexes. Omit if no DB changes |
 | **Files to create/modify** | One subsection per file: path, purpose, key class/method signatures, SQL patterns if applicable |
 | **RSpec tests** | One subsection per spec file: each example by name and what it verifies — derived directly from the behavioral specs |
-| **Implementation order** | Numbered steps, TDD-first: write failing specs → implement → `pre-commit-checks.sh` → commit |
+| **Implementation order** | One step per scenario: write spec → red → implement → green → commit. Each step is named after its scenario. Schema migrations and any required setup (factories, routes) come first as unnumbered prerequisites before the scenario steps begin. |
 | **Verification** | Exact commands and expected output to confirm the slice is done |
 
 The RSpec tests section must map one-to-one with the scenarios: each scenario becomes one or more named examples. No RSpec example may exist without a corresponding scenario, and no scenario may be left without a covering example.
