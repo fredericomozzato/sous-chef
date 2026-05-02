@@ -49,7 +49,7 @@ Note: `STATUS: COMPLETE` occurs with no `SLICE` field present — this is a mile
 | CHECKPOINT state | Last ran | Next step |
 |---|---|---|
 | `MILESTONE` only (no SLICE/STATUS) | `/chef:milestone` | `/chef:refine` |
-| `STATUS: IN_PROGRESS` | `/chef:build` if `sous-chef/issues/{MILESTONE}/{SLICE}.md` exists, otherwise `/chef:refine` | `/chef:build` |
+| `STATUS: IN_PROGRESS` | `/chef:refine` if `sous-chef/issues/{MILESTONE}/{SLICE}.md` exists, otherwise `/chef:milestone` | `/chef:build` if issues file exists, otherwise `/chef:refine` |
 | `STATUS: IN_REVIEW` | `/chef:build` | `/chef:qa` |
 | `STATUS: DONE` (SLICE present) | `/chef:qa` | `/chef:deliver` |
 | `STATUS: COMPLETE` (no SLICE) | `/chef:deliver` | merge PR → `/chef:milestone` |
