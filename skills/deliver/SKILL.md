@@ -257,8 +257,10 @@ Delivered — {MILESTONE}/{SLICE}
 <if pending slices remain:>
   Milestone {MILESTONE}: {N} of {total} slices done.
   CHECKPOINT reset. Next step: /chef:refine to plan the next slice.
+  Tip: run /clear to free up context first.
 
 <if milestone complete:>
   Milestone {MILESTONE} complete — all {total} slices delivered.
   CHECKPOINT marked complete. Next step: merge the PR, then /chef:milestone to start the next milestone.
+  Tip: run /clear to free up context first.
 ```

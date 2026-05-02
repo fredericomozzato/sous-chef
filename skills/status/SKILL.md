@@ -22,6 +22,7 @@ Read `sous-chef/CHECKPOINT`.
 ```
 No active milestone.
 Next step: /chef:milestone
+Tip: run /clear to free up context first.
 ```
 
 Parse the fields:
@@ -68,6 +69,7 @@ Milestone: {MILESTONE} — {milestone STATUS} ({DONE count}/{total} slices)
 
 Last ran:  {last ran}
 Next step: {next step}
+Tip: run /clear to free up context first.
 ```
 
 Rules:
@@ -76,5 +78,6 @@ Rules:
   ```
   Next step: merge the open PR
              then /chef:milestone
+  Tip: run /clear to free up context first.
   ```
 - Milestone STATUS for the header is derived from the milestone file's frontmatter `status` field, except: if CHECKPOINT has `STATUS: COMPLETE` (no SLICE), show `COMPLETE` in the header regardless of the frontmatter value.

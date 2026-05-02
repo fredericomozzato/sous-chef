@@ -241,6 +241,7 @@ Written to: sous-chef/reviews/{MILESTONE}/{SLICE}/revision-N.md (appended)
 Written to: sous-chef/reviews/{MILESTONE}/{SLICE}/revision-N.md (new)
 
 Next step: /chef:fix to resolve findings, then /chef:qa.
+Tip: run /clear to free up context first.
 ```
 
 **If no findings:**
