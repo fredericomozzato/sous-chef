@@ -100,33 +100,38 @@ info "Writing .tool-versions (ruby ${RUBY})"
 echo "ruby $RUBY" > .tool-versions
 ok ".tool-versions written"
 
-info "Dockerfile.dev (ruby:${RUBY_MINOR})"
+info "Dockerfile.dev (ruby:${RUBY_MINOR}, multi-stage: base / web / test)"
 YARN_INSTALL_LINE=""
 if [[ "$FRONTEND" == "react" ]]; then
   YARN_INSTALL_LINE="RUN npm install -g yarn"
 fi
-CHROME_INSTALL_BLOCK=""
-if [[ "$FRONTEND" != "none" ]]; then
-  info "UI frontend detected — adding Chromium for system specs"
-  CHROME_INSTALL_BLOCK="RUN apt-get update -qq && apt-get install -y chromium chromium-driver && rm -rf /var/lib/apt/lists/*"
-fi
 {
-  printf 'FROM ruby:%s\n' "$RUBY_MINOR"
+  printf '# syntax=docker/dockerfile:1\n\n'
+  printf 'FROM ruby:%s AS base\n' "$RUBY_MINOR"
   printf 'RUN apt-get update -qq && apt-get install -y \\\n'
   printf '    build-essential \\\n'
   printf '    curl \\\n'
   printf '    libpq-dev \\\n'
   printf '    nodejs \\\n'
   printf '    && rm -rf /var/lib/apt/lists/*\n'
-  [[ -n "$YARN_INSTALL_LINE"    ]] && printf '%s\n' "$YARN_INSTALL_LINE"
-  [[ -n "$CHROME_INSTALL_BLOCK" ]] && printf '%s\n' "$CHROME_INSTALL_BLOCK"
+  [[ -n "$YARN_INSTALL_LINE" ]] && printf '%s\n' "$YARN_INSTALL_LINE"
   cat << 'DOCKERFILE'
 WORKDIR /app
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
 EXPOSE 3000
 CMD ["bin/rails", "server", "-b", "0.0.0.0"]
+
+FROM base AS web
+
 DOCKERFILE
+  if [[ "$FRONTEND" != "none" ]]; then
+    info "UI frontend detected — adding Chromium to test stage"
+    printf 'FROM base AS test\n'
+    printf 'RUN apt-get update -qq && apt-get install -y chromium chromium-driver && rm -rf /var/lib/apt/lists/*\n'
+  else
+    printf 'FROM base AS test\n'
+  fi
 } > Dockerfile.dev
 ok "Dockerfile.dev written"
 
@@ -135,10 +140,11 @@ info "compose.yml"
 {
   cat << COMPOSE
 services:
-  app:
+  web:
     build:
       context: .
       dockerfile: Dockerfile.dev
+      target: web
     volumes:
       - .:/app
       - bundle_cache:/usr/local/bundle
@@ -147,6 +153,22 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:password@db:5432/${APP_NAME}_development
       RAILS_ENV: development
+    depends_on:
+      - db
+    stdin_open: true
+    tty: true
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: test
+    volumes:
+      - .:/app
+      - bundle_cache:/usr/local/bundle
+    environment:
+      DATABASE_URL: postgresql://postgres:password@db:5432/${APP_NAME}_test
+      RAILS_ENV: test
     depends_on:
       - db
     stdin_open: true
@@ -189,16 +211,16 @@ stop:
 	docker compose down
 
 shell:
-	docker compose exec app bash
+	docker compose exec web bash
 
 test:
-	docker compose exec app bundle exec rspec
+	docker compose run --rm test bundle exec rspec
 
 lint:
-	docker compose exec app bundle exec rubocop
+	docker compose exec web bundle exec rubocop
 
 logs:
-	docker compose logs -f app
+	docker compose logs -f web
 MAKEFILE
 ok "Makefile written"
 
@@ -298,14 +320,14 @@ cmd docker compose build --progress=quiet
 ok "Image built"
 
 info "bundle install (resolves + caches gems)"
-cmd docker compose run --rm app bundle install
+cmd docker compose run --rm web bundle install
 ok "Gems installed"
 
 # ── Step 7: RSpec and tooling configuration ───────────────────────────────────
 step "7/11" "Configuring RSpec, SimpleCov, FactoryBot, Bullet, RuboCop"
 
 info "Generating RSpec boilerplate"
-cmd docker compose run --rm app rails generate rspec:install
+cmd docker compose run --rm web rails generate rspec:install
 
 # Prepend SimpleCov to spec_helper.rb
 info "Patching spec/spec_helper.rb — prepending SimpleCov"
@@ -408,25 +430,25 @@ ok ".rubycritic_minimum_score set to 70"
 step "8/11" "Creating database"
 
 info "rails db:create — creates ${APP_NAME}_development"
-cmd docker compose run --rm app rails db:create
+cmd docker compose run --rm web rails db:create
 info "rails db:create (test) — creates ${APP_NAME}_test"
-cmd docker compose run --rm -e RAILS_ENV=test app rails db:create
+cmd docker compose run --rm test rails db:create
 ok "Databases created: ${APP_NAME}_development, ${APP_NAME}_test"
 
 NEEDS_MIGRATE=false
 if [[ "$JOBS" == "solid_queue" ]]; then
   info "Installing Solid Queue"
-  cmd docker compose run --rm app rails generate solid_queue:install
+  cmd docker compose run --rm web rails generate solid_queue:install
   NEEDS_MIGRATE=true
 fi
 if [[ "$UPLOADS" == "active_storage" ]]; then
   info "Installing Active Storage"
-  cmd docker compose run --rm app rails active_storage:install
+  cmd docker compose run --rm web rails active_storage:install
   NEEDS_MIGRATE=true
 fi
 if [[ "$NEEDS_MIGRATE" == true ]]; then
-  cmd docker compose run --rm app rails db:migrate
-  cmd docker compose run --rm -e RAILS_ENV=test app rails db:migrate
+  cmd docker compose run --rm web rails db:migrate
+  cmd docker compose run --rm test rails db:migrate
   ok "Migrations applied"
 fi
 
@@ -434,15 +456,15 @@ fi
 step "9/11" "Smoke tests (rspec dry-run + brakeman + rubocop)"
 
 info "[1/3] rspec --dry-run (verifies RSpec loads and config is valid)"
-cmd docker compose run --rm app bundle exec rspec --dry-run
+cmd docker compose run --rm test bundle exec rspec --dry-run
 ok "RSpec: dry-run passed"
 
 info "[2/3] brakeman (static security analysis)"
-cmd docker compose run --rm app bundle exec brakeman -q --no-pager
+cmd docker compose run --rm web bundle exec brakeman -q --no-pager
 ok "Brakeman: no vulnerabilities"
 
 info "[3/3] rubocop --parallel (verifies linter config is valid)"
-cmd docker compose run --rm app bundle exec rubocop --parallel
+cmd docker compose run --rm web bundle exec rubocop --parallel
 ok "RuboCop: config valid"
 
 # ── Step 10: Integration verification ────────────────────────────────────────
@@ -456,7 +478,7 @@ info "Waiting for Rails to respond on localhost:3000 (up to 60s)"
 TRIES=30
 RESPONDED=0
 for i in $(seq 1 $TRIES); do
-  if docker compose exec app curl -sf --max-time 2 -o /dev/null http://localhost:3000; then
+  if docker compose exec web curl -sf --max-time 2 -o /dev/null http://localhost:3000; then
     ok "Server responded (attempt ${i}/${TRIES})"
     RESPONDED=1
     break
@@ -465,11 +487,11 @@ for i in $(seq 1 $TRIES); do
 done
 if [[ $RESPONDED -eq 0 ]]; then
   docker compose down 2>/dev/null || true
-  die "Server did not respond after 60s — check: docker compose logs app"
+  die "Server did not respond after 60s — check: docker compose logs web"
 fi
 
 info "Checking DB connectivity"
-cmd docker compose exec app rails db:version
+cmd docker compose exec web rails db:version
 ok "DB connected"
 
 info "Stopping stack"

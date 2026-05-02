@@ -100,7 +100,7 @@ make build    # rebuild docker image
 Run a single spec:
 
 \`\`\`bash
-docker compose exec app bundle exec rspec spec/path/to/spec.rb
+docker compose run --rm test bundle exec rspec spec/path/to/spec.rb
 \`\`\`
 
 ## Project structure
