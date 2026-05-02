@@ -22,11 +22,13 @@ If CHECKPOINT is missing or `STATUS` is absent, stop:
 No slice is IN_PROGRESS. Run /chef:refine to plan a slice first.
 ```
 
-Parse the three fields: `MILESTONE`, `SLICE`, `STATUS`.
+Parse all fields: `MILESTONE`, `SLICE`, `STATUS`, and `STEP` (optional — absent on a fresh build).
 
 If `STATUS` is not `IN_PROGRESS`:
 - `IN_REVIEW` → `Slice {SLICE} is already built and awaiting review. Run /chef:qa to review it.`
 - `DONE` → `Slice {SLICE} is DONE. Run /chef:refine to plan the next slice.`
+
+If `STEP` is present, note the last completed step number — the build will resume from the next step.
 
 ---
 
@@ -37,6 +39,8 @@ Open `sous-chef/issues/{MILESTONE}/{SLICE}.md`. Read the entire file — context
 The plan is the contract. Do not consult any other high-level document (PRD, ARCHITECTURE, milestone file) — everything needed to implement this slice must already be embedded in the plan. If it is not, stop and tell the user the plan is incomplete, naming what is missing, then suggest re-running `/chef:refine` to fill the gap.
 
 Note the branch name from the frontmatter.
+
+Count and note every numbered step in the **Implementation order** section. Prerequisites (unnumbered setup tasks before step 1) are labeled `P1`, `P2`, etc.
 
 ---
 
@@ -105,11 +109,41 @@ If the branch already existed and was checked out directly (no fresh creation fr
 
 ## Step 7 — Implement with TDD
 
-Follow the plan's **Implementation order** exactly — step by step, in numbered sequence. Do not reorder steps, skip steps, or batch multiple steps into one commit.
+### Determine the starting point
 
-Handle any prerequisites (migrations, factories, routes) listed before the numbered steps first, committing each as `chore({MILESTONE}/{SLICE}): <description>`.
+Check the `STEP` value read from CHECKPOINT in Step 1:
 
-**Red-green cycle — one scenario per step, no exceptions:**
+- **`STEP` is absent** — fresh build. Start from the first prerequisite (if any), then step 1.
+- **`STEP` is `P{N}`** — prerequisites were partially completed. Resume from prerequisite `P{N+1}`, or step 1 if all prerequisites are done.
+- **`STEP` is a number** — that step is complete. Resume from step `{N+1}`.
+
+Announce the starting point:
+- Fresh: `"Starting implementation from the beginning."`
+- Resuming: `"Resuming from step {next step} — steps {completed list} already done."`
+
+Do not re-implement or re-commit completed steps. Git history is the ground truth — if a step's commit exists, it is done.
+
+### Prerequisites
+
+Handle any prerequisites (migrations, factories, routes) listed before the numbered steps first. For each prerequisite `P{N}`:
+
+1. Execute the prerequisite task.
+2. Commit: `git commit -m "chore({MILESTONE}/{SLICE}): <description>"`
+3. Update CHECKPOINT immediately after the commit — add or update the `STEP` line:
+   ```
+   MILESTONE: {MILESTONE}
+   SLICE: {SLICE}
+   STATUS: IN_PROGRESS
+   STEP: P{N}
+   ```
+   ```bash
+   git add sous-chef/CHECKPOINT
+   git commit -m "chore({MILESTONE}/{SLICE}): checkpoint P{N}"
+   ```
+
+### Red-green cycle — one scenario per numbered step, no exceptions
+
+For each numbered step in the implementation order:
 
 1. Write the RSpec example for this step's scenario only. Use the scenario name verbatim as the example description. Assert the THEN clause directly. Do not write examples for future steps.
 2. Run specs — confirm this example fails (red). If it passes without implementation, the test is wrong; fix it before proceeding.
@@ -121,21 +155,34 @@ Handle any prerequisites (migrations, factories, routes) listed before the numbe
    ```bash
    docker compose exec web rspec {spec file path}
    ```
-5. Commit.
+5. Commit the implementation.
    ```bash
    git add <specific files>
    git commit -m "feat({MILESTONE}/{SLICE}): <scenario name>"
    ```
+6. Update CHECKPOINT immediately after the commit — add or update the `STEP` line with the completed step number:
+   ```
+   MILESTONE: {MILESTONE}
+   SLICE: {SLICE}
+   STATUS: IN_PROGRESS
+   STEP: {N}
+   ```
+   ```bash
+   git add sous-chef/CHECKPOINT
+   git commit -m "chore({MILESTONE}/{SLICE}): checkpoint step {N}"
+   ```
 
-Repeat for the next step. Never carry uncommitted work into the next scenario.
+Never carry uncommitted work into the next scenario. Never skip the CHECKPOINT update after a commit.
 
 ---
 
-## Step 7 — Final quality gate
+## Step 8 — Final quality gate
 
 > **CRITICAL — mandatory and non-negotiable:**
 >
-> Run `pre-commit-checks.sh`. Every check must be green. Do not advance to Step 8 while any check is failing.
+> Run `pre-commit-checks.sh`. Every check must be green. Do not advance to Step 9 while any check is failing.
+
+Run the script. It is on PATH via the plugin's `bin/` directory — do not construct a path to it:
 
 ```bash
 pre-commit-checks.sh  # on PATH via plugin bin/
@@ -152,11 +199,11 @@ If anything fails:
 - "Tests pass, the lint failure is just style"
 - "I'll note the failure and move on"
 
-The only valid exit from Step 7 is `pre-commit-checks.sh` exiting with status 0.
+The only valid exit from Step 8 is `pre-commit-checks.sh` exiting with status 0.
 
 ---
 
-## Step 8 — Update status
+## Step 9 — Update status
 
 > **CRITICAL — read before touching any status field:**
 >
@@ -166,7 +213,14 @@ Update in this order:
 
 1. Issue file (`sous-chef/issues/{MILESTONE}/{SLICE}.md`) frontmatter: `status: IN_PROGRESS` → `status: IN_REVIEW`
 2. Milestone file (`sous-chef/milestones/{MILESTONE}.md`): slice `STATUS: IN_PROGRESS` → `STATUS: IN_REVIEW`
-3. CHECKPOINT (`sous-chef/CHECKPOINT`): `STATUS: IN_PROGRESS` → `STATUS: IN_REVIEW`
+3. CHECKPOINT (`sous-chef/CHECKPOINT`): set `STATUS: IN_REVIEW` and **remove the `STEP` line entirely** — it is only meaningful during an active build.
+
+   Final CHECKPOINT format after build:
+   ```
+   MILESTONE: {MILESTONE}
+   SLICE: {SLICE}
+   STATUS: IN_REVIEW
+   ```
 
 Commit the status updates together:
 
@@ -177,7 +231,7 @@ git commit -m "chore({MILESTONE}/{SLICE}): mark slice IN_REVIEW"
 
 ---
 
-## Step 9 — Handoff
+## Step 10 — Handoff
 
 ```
 Build complete — {MILESTONE}/{SLICE}
